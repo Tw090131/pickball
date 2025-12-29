@@ -22,8 +22,7 @@
       <text class="prompt-text">登录后可使用更多功能</text>
       <button 
         class="btn-primary login-btn"
-        open-type="getUserProfile"
-        bindgetuserprofile="getUserProfile"
+        bindtap="handleLogin"
       >
         微信授权登录
       </button>

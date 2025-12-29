@@ -55,48 +55,78 @@ App({
   // 微信登录
   async doLogin(userInfo) {
     try {
+      console.log('doLogin 开始，userInfo:', userInfo);
       wx.showLoading({ title: '登录中...' });
       
       // 获取微信登录code
       const loginRes = await new Promise((resolve, reject) => {
         wx.login({
-          success: resolve,
-          fail: reject
+          success: (res) => {
+            console.log('wx.login 成功', res);
+            resolve(res);
+          },
+          fail: (err) => {
+            console.error('wx.login 失败', err);
+            reject(err);
+          }
         });
       });
 
       if (!loginRes.code) {
+        console.error('未获取到 code', loginRes);
         throw new Error('获取登录凭证失败');
       }
 
+      console.log('准备调用后端登录接口，code:', loginRes.code);
+      
       // 调用后端登录接口
       const res = await wechatLogin(loginRes.code, userInfo);
+      console.log('后端登录接口返回', res);
       
-      if (res.success) {
+      if (res && res.success) {
         // 保存token和用户信息
-        wx.setStorageSync('token', res.data.token);
-        this.globalData.token = res.data.token;
-        this.globalData.userInfo = res.data.user;
+        const token = res.data?.token;
+        const user = res.data?.user;
+        
+        if (!token) {
+          throw new Error('登录成功但未获取到token');
+        }
+        
+        wx.setStorageSync('token', token);
+        this.globalData.token = token;
+        this.globalData.userInfo = user || {};
         this.globalData.isLoggedIn = true;
         
         wx.hideLoading();
         return {
           success: true,
-          user: res.data.user
+          user: user || {}
         };
       } else {
-        throw new Error(res.message || '登录失败');
+        const errorMsg = res?.message || '登录失败';
+        console.error('登录失败', errorMsg, res);
+        throw new Error(errorMsg);
       }
     } catch (err) {
-      console.error('登录失败', err);
+      console.error('登录过程异常', err);
       wx.hideLoading();
-      wx.showToast({
-        title: err.message || '登录失败，请重试',
-        icon: 'none'
-      });
+      
+      // 只有在没有显示过提示的情况下才显示
+      const errorMsg = err.message || '登录失败，请重试';
+      console.error('显示错误提示:', errorMsg);
+      
+      // 延迟一下再显示，避免和页面上的提示冲突
+      setTimeout(() => {
+        wx.showToast({
+          title: errorMsg,
+          icon: 'none',
+          duration: 2000
+        });
+      }, 100);
+      
       return {
         success: false,
-        message: err.message
+        message: errorMsg
       };
     }
   },

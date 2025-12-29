@@ -137,48 +137,114 @@ Page({
     }
   },
 
-  // 微信登录授权
+  // 处理登录按钮点击
+  handleLogin() {
+    console.log('登录按钮被点击');
+    
+    // 使用 wx.getUserProfile API 获取用户信息
+    wx.getUserProfile({
+      desc: '用于完善用户资料', // 声明获取用户个人信息后的用途，不超过30个字符
+      success: (res) => {
+        console.log('getUserProfile 成功', res);
+        this.getUserProfile({ detail: res });
+      },
+      fail: (err) => {
+        console.error('getUserProfile 失败', err);
+        if (err.errMsg && err.errMsg.includes('cancel')) {
+          wx.showToast({
+            title: '已取消授权',
+            icon: 'none',
+            duration: 2000
+          });
+        } else {
+          wx.showToast({
+            title: '授权失败，请重试',
+            icon: 'none',
+            duration: 2000
+          });
+        }
+      }
+    });
+  },
+
+  // 微信登录授权（处理授权结果）
   async getUserProfile(e) {
-    if (!e.detail.userInfo) {
+    console.log('getUserProfile 被调用', e);
+    
+    // 兼容两种调用方式：按钮事件和直接调用
+    const detail = e.detail || e;
+    console.log('授权详情:', detail);
+    
+    // 检查是否有错误
+    if (detail.errMsg && detail.errMsg !== 'getUserProfile:ok') {
+      console.error('授权失败', detail.errMsg);
       wx.showToast({
-        title: '授权失败',
-        icon: 'none'
+        title: detail.errMsg.includes('cancel') ? '已取消授权' : '授权失败',
+        icon: 'none',
+        duration: 2000
       });
       return;
     }
 
-    const userInfo = e.detail.userInfo;
-    const result = await app.doLogin(userInfo);
-    
-    if (result.success) {
-      // 确保用户信息完整
-      const user = result.user || {};
-      
-      // 如果后端返回的用户信息不完整，使用授权时的用户信息补充
-      const fullUserInfo = {
-        ...user,
-        nickName: user.nickName || userInfo.nickName || '用户',
-        avatarUrl: user.avatarUrl || userInfo.avatarUrl || '',
-        phoneNumber: user.phoneNumber || ''
-      };
-      
-      // 更新全局数据
-      app.globalData.userInfo = fullUserInfo;
-      
-      // 更新页面数据
-      this.setData({
-        isLoggedIn: true,
-        userInfo: fullUserInfo,
-        phoneNumber: fullUserInfo.phoneNumber || '',
-        hasPhone: !!fullUserInfo.phoneNumber
-      });
-      
-      // 加载统计数据
-      this.loadStatistics();
-      
+    // 检查用户信息
+    const userInfo = detail.userInfo;
+    if (!userInfo) {
+      console.error('未获取到用户信息', detail);
       wx.showToast({
-        title: '登录成功',
-        icon: 'success'
+        title: '授权失败，未获取到用户信息',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+
+    try {
+      console.log('开始登录，用户信息:', userInfo);
+      
+      const result = await app.doLogin(userInfo);
+      console.log('登录结果:', result);
+      
+      if (result && result.success) {
+        // 确保用户信息完整
+        const user = result.user || {};
+        
+        // 如果后端返回的用户信息不完整，使用授权时的用户信息补充
+        const fullUserInfo = {
+          ...user,
+          nickName: user.nickName || userInfo.nickName || '用户',
+          avatarUrl: user.avatarUrl || userInfo.avatarUrl || '',
+          phoneNumber: user.phoneNumber || ''
+        };
+        
+        // 更新全局数据
+        app.globalData.userInfo = fullUserInfo;
+        
+        // 更新页面数据
+        this.setData({
+          isLoggedIn: true,
+          userInfo: fullUserInfo,
+          phoneNumber: fullUserInfo.phoneNumber || '',
+          hasPhone: !!fullUserInfo.phoneNumber
+        });
+        
+        // 加载统计数据
+        this.loadStatistics();
+        
+        wx.showToast({
+          title: '登录成功',
+          icon: 'success',
+          duration: 1500
+        });
+      } else {
+        // 登录失败，但 doLogin 已经显示了错误提示
+        console.error('登录失败', result);
+      }
+    } catch (err) {
+      console.error('登录过程异常', err);
+      wx.showToast({
+        title: err.message || '登录失败，请重试',
+        icon: 'none',
+        duration: 2000
       });
     }
   },
