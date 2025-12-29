@@ -1,0 +1,124 @@
+/* pages/event-detail/event-detail.wxss */
+.event-header {
+  margin-bottom: 20rpx;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+.event-title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+}
+
+.organizer {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.info-section {
+  margin-bottom: 30rpx;
+  padding-bottom: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.info-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.label {
+  color: #999;
+  margin-right: 10rpx;
+  min-width: 150rpx;
+}
+
+.distance {
+  margin-left: 10rpx;
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.fee {
+  color: #F44336;
+  font-weight: bold;
+}
+
+.description {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+.participants {
+  margin-bottom: 20rpx;
+}
+
+.participant-list {
+  margin-top: 20rpx;
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  padding: 15rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.participant-item:last-child {
+  border-bottom: none;
+}
+
+.avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+.name {
+  font-size: 28rpx;
+  color: #333;
+  margin-right: 20rpx;
+}
+
+.partner {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.action-buttons {
+  padding: 20rpx 0;
+}
+
+.action-btn {
+  width: 100%;
+  margin-bottom: 20rpx;
+}
+
+.action-btn:last-child {
+  margin-bottom: 0;
+}
+

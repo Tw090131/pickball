@@ -1,0 +1,87 @@
+/* pages/create-event/create-event.wxss */
+.form-container {
+  padding-bottom: 40rpx;
+}
+
+.form-section {
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30rpx;
+  padding-bottom: 15rpx;
+  border-bottom: 2rpx solid #4CAF50;
+}
+
+.picker-view {
+  padding: 20rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  color: #333;
+  background-color: white;
+}
+
+.textarea-field {
+  width: 100%;
+  min-height: 200rpx;
+  padding: 20rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.submit-section {
+  padding: 40rpx 20rpx;
+}
+
+.submit-btn {
+  width: 100%;
+  font-size: 32rpx;
+  padding: 25rpx;
+}
+
+.input-hint {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+  display: block;
+}
+
+.switch-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+}
+
+.location-input {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+}
+
+.location-input .input-field {
+  flex: 1;
+}
+
+.btn-location {
+  padding: 15rpx 25rpx;
+  font-size: 26rpx;
+  background-color: #f0f0f0;
+  color: #333;
+  border-radius: 8rpx;
+  border: none;
+  white-space: nowrap;
+}
+
+.rotation-settings {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+

@@ -1,0 +1,83 @@
+<!--pages/register/register.wxml-->
+<view class="container">
+  <view class="event-info card">
+    <view class="event-title">{{event.title}}</view>
+    <view class="event-meta">
+      <text>{{event.startTime}}</text>
+      <text>{{event.location}}</text>
+    </view>
+    <view class="fee-info" wx:if="{{event.registrationFee > 0}}">
+      报名费：<text class="fee">¥{{event.registrationFee}}</text>
+    </view>
+  </view>
+
+  <!-- 用户信息 -->
+  <view class="form-section card">
+    <view class="section-title">报名信息</view>
+    
+    <view class="user-info" wx:if="{{userInfo}}">
+      <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+      <view class="user-details">
+        <text class="nickname">{{userInfo.nickName}}</text>
+        <text class="phone" wx:if="{{userInfo.phoneNumber}}">{{userInfo.phoneNumber}}</text>
+      </view>
+    </view>
+
+    <button 
+      class="btn-secondary login-btn"
+      wx:if="{{!userInfo}}"
+      open-type="getPhoneNumber"
+      bindgetphonenumber="getPhoneNumber"
+    >
+      授权手机号登录
+    </button>
+  </view>
+
+  <!-- 组队选择（仅双打和混双） -->
+  <view class="form-section card" wx:if="{{event.format === '双打' || event.format === '混双'}}">
+    <view class="section-title">组队方式</view>
+    
+    <radio-group bindchange="onTeamModeChange">
+      <label class="radio-item">
+        <radio value="with-partner" checked="{{teamMode === 'with-partner'}}" />
+        <text>自带搭档</text>
+      </label>
+      <label class="radio-item">
+        <radio value="random" checked="{{teamMode === 'random'}}" />
+        <text>随机匹配</text>
+      </label>
+    </radio-group>
+
+    <!-- 自带搭档输入 -->
+    <view class="input-group" wx:if="{{teamMode === 'with-partner'}}">
+      <text class="input-label">搭档昵称</text>
+      <input 
+        class="input-field" 
+        placeholder="请输入搭档的昵称或手机号"
+        value="{{partnerName}}"
+        bindinput="onPartnerInput"
+      />
+    </view>
+  </view>
+
+  <!-- 支付信息 -->
+  <view class="payment-section card" wx:if="{{event.registrationFee > 0}}">
+    <view class="payment-info">
+      <text class="label">报名费：</text>
+      <text class="amount">¥{{event.registrationFee}}</text>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-section">
+    <button 
+      class="btn-primary submit-btn"
+      bindtap="submitRegistration"
+      disabled="{{!canSubmit || submitting}}"
+      loading="{{submitting}}"
+    >
+      {{submitting ? '处理中...' : (event.registrationFee > 0 ? '确认支付' : '确认报名')}}
+    </button>
+  </view>
+</view>
+

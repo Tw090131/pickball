@@ -1,0 +1,122 @@
+<!--pages/event-detail/event-detail.wxml-->
+<view class="container">
+  <view class="event-header card">
+    <view class="header-top">
+      <view class="event-title">{{event.title}}</view>
+      <view class="status-tag {{event.statusClass}}">{{event.status}}</view>
+    </view>
+    <view class="organizer">主办方：{{event.organizer}}</view>
+  </view>
+
+  <view class="event-info card">
+    <view class="info-section">
+      <view class="section-title">📅 时间信息</view>
+      <view class="info-row">
+        <text class="label">开始时间：</text>
+        <text>{{event.startTime}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">结束时间：</text>
+        <text>{{event.endTime}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">报名截止：</text>
+        <text>{{event.registrationDeadline}}</text>
+      </view>
+    </view>
+
+    <view class="info-section">
+      <view class="section-title">📍 地点信息</view>
+      <view class="info-row">
+        <text>{{event.location}}</text>
+        <text class="distance" wx:if="{{event.distance}}">{{event.distance}}km</text>
+      </view>
+    </view>
+
+    <view class="info-section">
+      <view class="section-title">🏆 赛制信息</view>
+      <view class="info-row">
+        <text class="label">比赛形式：</text>
+        <text>{{event.format}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">轮转规则：</text>
+        <text>{{event.rotationRule}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">计分制：</text>
+        <text>{{event.scoringSystem}}分制</text>
+      </view>
+    </view>
+
+    <view class="info-section">
+      <view class="section-title">👥 报名信息</view>
+      <view class="info-row">
+        <text class="label">报名人数：</text>
+        <text>{{event.currentParticipants}}/{{event.maxParticipants}}人</text>
+      </view>
+      <view class="info-row">
+        <text class="label">报名费：</text>
+        <text class="fee" wx:if="{{event.registrationFee > 0}}">¥{{event.registrationFee}}</text>
+        <text wx:else>免费</text>
+      </view>
+    </view>
+
+    <view class="info-section" wx:if="{{event.description}}">
+      <view class="section-title">📝 活动说明</view>
+      <view class="description">{{event.description}}</view>
+    </view>
+  </view>
+
+  <!-- 已报名列表 -->
+  <view class="participants card" wx:if="{{participants.length > 0}}">
+    <view class="section-title">已报名人员</view>
+    <view class="participant-list">
+      <view class="participant-item" wx:for="{{participants}}" wx:key="id">
+        <image class="avatar" src="{{item.avatarUrl}}" mode="aspectFill"></image>
+        <text class="name">{{item.nickName}}</text>
+        <text class="partner" wx:if="{{item.partnerName}}">搭档：{{item.partnerName}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button 
+      class="btn-primary action-btn"
+      wx:if="{{event.status === '报名中' && !isRegistered}}"
+      bindtap="goToRegister"
+    >
+      立即报名
+    </button>
+    <button 
+      class="btn-secondary action-btn"
+      wx:if="{{event.status === '报名中' && isRegistered}}"
+      disabled
+    >
+      已报名
+    </button>
+    <button 
+      class="btn-primary action-btn"
+      wx:if="{{event.status === '比赛中'}}"
+      bindtap="goToScoreboard"
+    >
+      进入计分板
+    </button>
+    <button 
+      class="btn-primary action-btn"
+      wx:if="{{event.status === '比赛中' || event.status === '已结束'}}"
+      bindtap="goToRanking"
+    >
+      查看排名
+    </button>
+    <button 
+      class="btn-primary action-btn"
+      wx:if="{{event.rotationRule === '淘汰赛' && (event.status === '比赛中' || event.status === '已结束')}}"
+      bindtap="goToBracket"
+    >
+      查看晋级图
+    </button>
+  </view>
+</view>
+

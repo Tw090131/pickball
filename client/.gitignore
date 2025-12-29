@@ -1,0 +1,33 @@
+# 微信小程序
+project.private.config.json
+project.config.json.bak
+
+# 日志文件
+*.log
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 临时文件
+*.tmp
+*.temp
+
+# 依赖
+node_modules/
+
+# 构建输出
+dist/
+build/
+
+# 其他项目文件（避免干扰编译）
+images/ddd/
+images/ddd - 副本/
+

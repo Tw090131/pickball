@@ -1,0 +1,114 @@
+/* pages/register/register.wxss */
+.event-info {
+  margin-bottom: 20rpx;
+}
+
+.event-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15rpx;
+}
+
+.event-meta {
+  display: flex;
+  flex-direction: column;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 15rpx;
+}
+
+.fee-info {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.fee {
+  color: #F44336;
+  font-weight: bold;
+  font-size: 32rpx;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+}
+
+.avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.nickname {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.phone {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.login-btn {
+  width: 100%;
+  margin-top: 20rpx;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+}
+
+.radio-item radio {
+  margin-right: 15rpx;
+}
+
+.payment-section {
+  margin-bottom: 20rpx;
+}
+
+.payment-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+}
+
+.payment-info .label {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.payment-info .amount {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #F44336;
+}
+
+.submit-section {
+  padding: 40rpx 20rpx;
+}
+
+.submit-btn {
+  width: 100%;
+  font-size: 32rpx;
+  padding: 25rpx;
+}
+
+.submit-btn[disabled] {
+  background-color: #ccc;
+  color: #999;
+}
+

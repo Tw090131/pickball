@@ -1,0 +1,282 @@
+<!--pages/create-event/create-event.wxml-->
+<view class="container">
+  <view class="form-container">
+    <!-- 基本信息 -->
+    <view class="form-section card">
+      <view class="section-title">基本信息</view>
+      
+      <view class="input-group">
+        <text class="input-label">活动标题 *</text>
+        <input 
+          class="input-field" 
+          placeholder="请输入活动标题"
+          value="{{formData.title}}"
+          bindinput="onInput"
+          data-field="title"
+        />
+      </view>
+
+      <view class="input-group">
+        <text class="input-label">活动分类 *</text>
+        <picker 
+          mode="selector" 
+          range="{{categories}}"
+          range-key="label"
+          value="{{formData.categoryIndex}}"
+          bindchange="onCategoryChange"
+        >
+          <view class="picker-view">
+            {{categories[formData.categoryIndex].label}}
+          </view>
+        </picker>
+      </view>
+
+      <view class="input-group">
+        <text class="input-label">活动地点 *</text>
+        <view class="location-input">
+          <input 
+            class="input-field" 
+            placeholder="请输入活动地点或点击选择"
+            value="{{formData.location}}"
+            bindinput="onInput"
+            data-field="location"
+          />
+          <button class="btn-location" bindtap="chooseLocation">📍 选择位置</button>
+        </view>
+        <text class="input-hint" wx:if="{{formData.location}}">已选择：{{formData.location}}</text>
+      </view>
+    </view>
+
+    <!-- 时间信息 -->
+    <view class="form-section card">
+      <view class="section-title">时间信息</view>
+      
+      <view class="input-group">
+        <text class="input-label">开始时间 *</text>
+        <picker 
+          mode="multiSelector"
+          value="{{startTimeIndex}}"
+          range="{{timePickerRange}}"
+          bindchange="onStartTimeChange"
+        >
+          <view class="picker-view">
+            {{formData.startTime || '请选择开始时间'}}
+          </view>
+        </picker>
+      </view>
+
+      <view class="input-group">
+        <text class="input-label">结束时间 *</text>
+        <picker 
+          mode="multiSelector"
+          value="{{endTimeIndex}}"
+          range="{{timePickerRange}}"
+          bindchange="onEndTimeChange"
+        >
+          <view class="picker-view">
+            {{formData.endTime || '请选择结束时间'}}
+          </view>
+        </picker>
+      </view>
+
+      <view class="input-group">
+        <text class="input-label">报名截止时间 *</text>
+        <picker 
+          mode="multiSelector"
+          value="{{deadlineIndex}}"
+          range="{{timePickerRange}}"
+          bindchange="onDeadlineChange"
+        >
+          <view class="picker-view">
+            {{formData.registrationDeadline || '请选择报名截止时间'}}
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 赛制设置 -->
+    <view class="form-section card">
+      <view class="section-title">赛制设置</view>
+      
+      <view class="input-group">
+        <text class="input-label">比赛形式 *</text>
+        <picker 
+          mode="selector" 
+          range="{{formats}}"
+          value="{{formData.formatIndex}}"
+          bindchange="onFormatChange"
+        >
+          <view class="picker-view">
+            {{formats[formData.formatIndex]}}
+          </view>
+        </picker>
+      </view>
+
+      <view class="input-group">
+        <text class="input-label">轮转规则 *</text>
+        <picker 
+          mode="selector" 
+          range="{{rotationRules}}"
+          value="{{formData.rotationRuleIndex}}"
+          bindchange="onRotationRuleChange"
+        >
+          <view class="picker-view">
+            {{rotationRules[formData.rotationRuleIndex]}}
+          </view>
+        </picker>
+      </view>
+
+      <view class="input-group">
+        <text class="input-label">计分制 *</text>
+        <picker 
+          mode="selector" 
+          range="{{scoringSystems}}"
+          value="{{formData.scoringSystemIndex}}"
+          bindchange="onScoringSystemChange"
+        >
+          <view class="picker-view">
+            {{scoringSystems[formData.scoringSystemIndex]}}分制
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 报名设置 -->
+    <view class="form-section card">
+      <view class="section-title">报名设置</view>
+      
+      <view class="input-group">
+        <text class="input-label">最大人数 *</text>
+        <input 
+          class="input-field" 
+          type="number"
+          placeholder="{{minPlayers}}-{{maxPlayers}}人"
+          value="{{formData.maxParticipants}}"
+          bindinput="onInput"
+          data-field="maxParticipants"
+          min="{{minPlayers}}"
+          max="{{maxPlayers}}"
+        />
+        <text class="input-hint" wx:if="{{rotationType === 'eight_rotation'}}">
+          八人转支持 {{minPlayers}}-{{maxPlayers}} 人参与
+        </text>
+      </view>
+
+      <view class="input-group">
+        <text class="input-label">报名费（元）</text>
+        <input 
+          class="input-field" 
+          type="digit"
+          placeholder="0表示免费（含场地费平摊）"
+          value="{{formData.registrationFee}}"
+          bindinput="onInput"
+          data-field="registrationFee"
+        />
+        <text class="input-hint">报名费将平摊场地费用</text>
+      </view>
+
+      <!-- 八人转特殊设置 -->
+      <view class="rotation-settings" wx:if="{{rotationType === 'eight_rotation'}}">
+        <view class="input-group">
+          <view class="switch-group">
+            <text class="input-label">允许替补</text>
+            <switch 
+              checked="{{allowSubstitute}}"
+              bindchange="onSubstituteChange"
+              color="#4CAF50"
+            />
+          </view>
+          <text class="input-hint">允许半路加入或替补参与</text>
+        </view>
+
+        <!-- 6人和7人的特殊模式选择 -->
+        <view class="input-group" wx:if="{{formData.maxParticipants == 6}}">
+          <text class="input-label">6人转模式 *</text>
+          <picker 
+            mode="selector"
+            range="{{sixPlayerModes}}"
+            range-key="name"
+            value="{{sixPlayerModeIndex}}"
+            bindchange="onSixPlayerModeChange"
+          >
+            <view class="picker-view">
+              {{sixPlayerModes[sixPlayerModeIndex].name}} - {{sixPlayerModes[sixPlayerModeIndex].description}}
+            </view>
+          </picker>
+        </view>
+
+        <view class="input-group" wx:if="{{formData.maxParticipants == 7}}">
+          <text class="input-label">7人转模式 *</text>
+          <picker 
+            mode="selector"
+            range="{{sevenPlayerModes}}"
+            range-key="name"
+            value="{{sevenPlayerModeIndex}}"
+            bindchange="onSevenPlayerModeChange"
+          >
+            <view class="picker-view">
+              {{sevenPlayerModes[sevenPlayerModeIndex].name}} - {{sevenPlayerModes[sevenPlayerModeIndex].description}}
+            </view>
+          </picker>
+        </view>
+
+        <!-- 让分设置 -->
+        <view class="input-group">
+          <view class="switch-group">
+            <text class="input-label">启用让分</text>
+            <switch 
+              checked="{{enableHandicap}}"
+              bindchange="onHandicapChange"
+              color="#4CAF50"
+            />
+          </view>
+          <text class="input-hint">考虑男女力量差异，设置让分规则</text>
+        </view>
+
+        <view class="input-group" wx:if="{{enableHandicap}}">
+          <text class="input-label">让分规则</text>
+          <picker 
+            mode="selector"
+            range="{{handicapTemplates}}"
+            range-key="name"
+            value="{{handicapTemplateIndex}}"
+            bindchange="onHandicapTemplateChange"
+          >
+            <view class="picker-view">
+              {{handicapTemplates[handicapTemplateIndex].name}} - {{handicapTemplates[handicapTemplateIndex].description}}
+            </view>
+          </picker>
+        </view>
+      </view>
+    </view>
+
+    <!-- 活动说明 -->
+    <view class="form-section card">
+      <view class="section-title">活动说明</view>
+      
+      <view class="input-group">
+        <textarea 
+          class="textarea-field" 
+          placeholder="请输入活动说明（选填）"
+          value="{{formData.description}}"
+          bindinput="onInput"
+          data-field="description"
+          maxlength="500"
+        />
+      </view>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="submit-section">
+      <button 
+        class="btn-primary submit-btn" 
+        bindtap="submitEvent"
+        disabled="{{submitting}}"
+        loading="{{submitting}}"
+      >
+        {{submitting ? '发布中...' : '发布活动'}}
+      </button>
+    </view>
+  </view>
+</view>
+

@@ -1,0 +1,74 @@
+<!--pages/ranking/ranking.wxml-->
+<view class="container">
+  <view class="event-header card">
+    <view class="event-title">{{event.title}}</view>
+    <view class="event-meta">{{event.format}} · {{event.scoringSystem}}分制</view>
+  </view>
+
+  <!-- 排名列表 -->
+  <view class="ranking-list card">
+    <view class="section-title">实时排名</view>
+    
+    <!-- 前三名特殊展示 -->
+    <view class="top-three" wx:if="{{rankingList.length >= 3}}">
+      <view class="top-item second">
+        <view class="rank-badge">2</view>
+        <view class="player-info">
+          <text class="player-name">{{rankingList[1].name}}</text>
+          <text class="player-stats">胜场: {{rankingList[1].wins}} | 净胜分: {{rankingList[1].netScore}}</text>
+        </view>
+      </view>
+      <view class="top-item first">
+        <view class="rank-badge gold">1</view>
+        <view class="player-info">
+          <text class="player-name">{{rankingList[0].name}}</text>
+          <text class="player-stats">胜场: {{rankingList[0].wins}} | 净胜分: {{rankingList[0].netScore}}</text>
+        </view>
+      </view>
+      <view class="top-item third">
+        <view class="rank-badge">3</view>
+        <view class="player-info">
+          <text class="player-name">{{rankingList[2].name}}</text>
+          <text class="player-stats">胜场: {{rankingList[2].wins}} | 净胜分: {{rankingList[2].netScore}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 其他排名 -->
+    <view class="ranking-items">
+      <view 
+        class="ranking-item"
+        wx:for="{{rankingList}}"
+        wx:key="id"
+        wx:for-index="index"
+        wx:if="{{index >= 3}}"
+      >
+        <view class="rank-number">{{index + 1}}</view>
+        <view class="player-info">
+          <text class="player-name">{{item.name}}</text>
+          <text class="player-stats">胜场: {{item.wins}} | 净胜分: {{item.netScore}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计信息 -->
+  <view class="stats-section card">
+    <view class="section-title">统计信息</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-value">{{totalMatches}}</text>
+        <text class="stat-label">总比赛数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{completedMatches}}</text>
+        <text class="stat-label">已完成</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{inProgressMatches}}</text>
+        <text class="stat-label">进行中</text>
+      </view>
+    </view>
+  </view>
+</view>
+

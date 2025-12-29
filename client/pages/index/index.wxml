@@ -1,0 +1,145 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- 搜索和筛选栏 -->
+  <view class="search-bar">
+    <view class="search-box" bindtap="showSearch">
+      <text class="search-icon">🔍</text>
+      <text class="search-text">搜索赛事、活动、俱乐部</text>
+    </view>
+  </view>
+
+  <!-- 分类标签 -->
+  <view class="category-tabs">
+    <view 
+      class="tab-item {{currentCategory === 'all' ? 'active' : ''}}"
+      bindtap="switchCategory"
+      data-category="all"
+    >
+      全部
+    </view>
+    <view 
+      class="tab-item {{currentCategory === 'competition' ? 'active' : ''}}"
+      bindtap="switchCategory"
+      data-category="competition"
+    >
+      比赛
+    </view>
+    <view 
+      class="tab-item {{currentCategory === 'activity' ? 'active' : ''}}"
+      bindtap="switchCategory"
+      data-category="activity"
+    >
+      活动
+    </view>
+    <view 
+      class="tab-item {{currentCategory === 'club' ? 'active' : ''}}"
+      bindtap="switchCategory"
+      data-category="club"
+    >
+      俱乐部
+    </view>
+  </view>
+
+  <!-- 排序选项 -->
+  <view class="sort-bar">
+    <view 
+      class="sort-item {{sortBy === 'time' ? 'active' : ''}}"
+      bindtap="sortEvents"
+      data-sort="time"
+    >
+      时间
+    </view>
+    <view 
+      class="sort-item {{sortBy === 'distance' ? 'active' : ''}}"
+      bindtap="sortEvents"
+      data-sort="distance"
+    >
+      距离
+    </view>
+  </view>
+
+  <!-- 赛事列表 -->
+  <view class="event-list">
+    <view 
+      class="event-card card"
+      wx:for="{{filteredEvents}}"
+      wx:key="id"
+      bindtap="goToEventDetail"
+      data-id="{{item.id}}"
+    >
+      <view class="event-header">
+        <view class="event-title">{{item.title}}</view>
+        <view class="status-tag {{item.statusClass}}">{{item.status}}</view>
+      </view>
+      
+      <view class="event-info">
+        <view class="info-item">
+          <text class="info-icon">📅</text>
+          <text>{{item.startTime}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-icon">📍</text>
+          <text>{{item.location}}</text>
+          <text class="distance" wx:if="{{item.distance}}">{{item.distance}}km</text>
+        </view>
+        <view class="info-item">
+          <text class="info-icon">👥</text>
+          <text>{{item.currentParticipants}}/{{item.maxParticipants}}人</text>
+          <text class="tag tag-danger" wx:if="{{item.registration.isFull}}" style="margin-left: 10rpx; font-size: 20rpx;">已满</text>
+        </view>
+        <view class="info-item">
+          <text class="info-icon">🏆</text>
+          <text>{{item.formatText}} · {{item.scoringSystem}}分制</text>
+        </view>
+        <view class="info-item" wx:if="{{item.organizer}}">
+          <text class="info-icon">🏢</text>
+          <text>{{item.organizerName}}</text>
+        </view>
+      </view>
+
+      <!-- 参与者头像 -->
+      <view class="participants-preview" wx:if="{{item.participants && item.participants.length > 0}}">
+        <view class="participants-avatars">
+          <image 
+            class="participant-avatar"
+            wx:for="{{item.participants}}"
+            wx:key="id"
+            wx:for-item="participant"
+            src="{{participant.avatar}}"
+            mode="aspectFill"
+          />
+        </view>
+        <text class="participants-count" wx:if="{{item.participants.length > 5}}">+{{item.participants.length - 5}}</text>
+      </view>
+
+      <view class="event-footer">
+        <view class="event-tags">
+          <text class="tag tag-primary" wx:if="{{item.registrationFee > 0}}">¥{{item.registrationFee}}</text>
+          <text class="tag tag-info">{{item.rotationRule}}</text>
+          <text class="tag tag-default" wx:if="{{item.stats && item.stats.views}}">👁️ {{item.stats.views}}</text>
+        </view>
+        <view class="event-type">{{item.categoryText}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="empty-state" wx:if="{{loading}}">
+    <view class="empty-state-icon">⏳</view>
+    <view class="empty-state-text">加载中...</view>
+  </view>
+
+  <!-- 错误状态 -->
+  <view class="empty-state" wx:if="{{!loading && error}}">
+    <view class="empty-state-icon">⚠️</view>
+    <view class="empty-state-text">{{error}}</view>
+    <button class="btn-primary" bindtap="loadEvents" style="margin-top: 20rpx;">重试</button>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && !error && filteredEvents.length === 0}}">
+    <view class="empty-state-icon">🏸</view>
+    <view class="empty-state-text">暂无赛事</view>
+  </view>
+</view>
+

@@ -1,0 +1,169 @@
+/* pages/scoreboard/scoreboard.wxss */
+.event-header {
+  margin-bottom: 20rpx;
+}
+
+.event-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.event-meta {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.current-match {
+  margin-bottom: 20rpx;
+}
+
+.match-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40rpx 0;
+  margin-bottom: 30rpx;
+}
+
+.team {
+  flex: 1;
+  text-align: center;
+}
+
+.team-name {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+}
+
+.team-score {
+  font-size: 72rpx;
+  font-weight: bold;
+  color: #4CAF50;
+}
+
+.vs {
+  font-size: 32rpx;
+  color: #999;
+  margin: 0 30rpx;
+}
+
+.score-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.score-btn {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-buttons button {
+  flex: 1;
+}
+
+.matches-section {
+  margin-bottom: 20rpx;
+}
+
+.match-list {
+  margin-top: 20rpx;
+}
+
+.match-item {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.match-item:last-child {
+  border-bottom: none;
+}
+
+.match-teams {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.match-teams .team-name {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.match-teams .score {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #4CAF50;
+  margin: 0 20rpx;
+}
+
+.match-status {
+  text-align: right;
+}
+
+.add-match-section {
+  margin-bottom: 40rpx;
+}
+
+/* 八人转局比分样式 */
+.game-score-input {
+  margin-top: 30rpx;
+  padding-top: 30rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.score-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.game-score {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.points {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #4CAF50;
+}
+
+.score-hint {
+  margin-top: 20rpx;
+  padding: 15rpx;
+  background-color: #f9f9f9;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #999;
+  text-align: center;
+}
+
+.score-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5rpx;
+}
+
+.score-info .game-score {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.score-info .points {
+  font-size: 24rpx;
+  color: #999;
+}
+

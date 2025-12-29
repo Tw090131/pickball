@@ -1,0 +1,129 @@
+/* pages/ranking/ranking.wxss */
+.event-header {
+  margin-bottom: 20rpx;
+}
+
+.ranking-list {
+  margin-bottom: 20rpx;
+}
+
+.top-three {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  padding: 40rpx 0;
+  margin-bottom: 30rpx;
+}
+
+.top-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.top-item.first {
+  order: 2;
+  transform: scale(1.1);
+}
+
+.top-item.second {
+  order: 1;
+}
+
+.top-item.third {
+  order: 3;
+}
+
+.rank-badge {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background-color: #9E9E9E;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 15rpx;
+}
+
+.rank-badge.gold {
+  background-color: #FFD700;
+  width: 80rpx;
+  height: 80rpx;
+  font-size: 40rpx;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.player-name {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.player-stats {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.ranking-items {
+  margin-top: 20rpx;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.ranking-item:last-child {
+  border-bottom: none;
+}
+
+.rank-number {
+  width: 60rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #666;
+  margin-right: 20rpx;
+}
+
+.stats-section {
+  margin-bottom: 40rpx;
+}
+
+.stats-grid {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20rpx;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #4CAF50;
+  margin-bottom: 10rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #999;
+}
+

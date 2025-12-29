@@ -1,0 +1,152 @@
+<!--pages/scoreboard/scoreboard.wxml-->
+<view class="container">
+  <view class="event-header card">
+    <view class="event-title">{{event.title}}</view>
+    <view class="event-meta">{{event.format}} · {{event.scoringSystem}}分制</view>
+  </view>
+
+  <!-- 当前比赛 -->
+  <view class="current-match card" wx:if="{{currentMatch}}">
+    <view class="section-title">当前比赛</view>
+    <view class="match-info">
+      <view class="team team-a">
+        <view class="team-name">{{currentMatch.teamA}}</view>
+        <!-- 八人转显示局比分和积分 -->
+        <view wx:if="{{isRotation && currentMatch.gameScoreA}}" class="score-detail">
+          <view class="game-score">局比分: {{currentMatch.gameScoreA.gamesWon}}:{{currentMatch.gameScoreA.gamesLost}}</view>
+          <view class="points">积分: {{currentMatch.pointsA}}</view>
+        </view>
+        <!-- 传统计分显示分数 -->
+        <view class="team-score" wx:else>{{currentMatch.scoreA}}</view>
+      </view>
+      <view class="vs">VS</view>
+      <view class="team team-b">
+        <view class="team-name">{{currentMatch.teamB}}</view>
+        <!-- 八人转显示局比分和积分 -->
+        <view wx:if="{{isRotation && currentMatch.gameScoreB}}" class="score-detail">
+          <view class="game-score">局比分: {{currentMatch.gameScoreB.gamesWon}}:{{currentMatch.gameScoreB.gamesLost}}</view>
+          <view class="points">积分: {{currentMatch.pointsB}}</view>
+        </view>
+        <!-- 传统计分显示分数 -->
+        <view class="team-score" wx:else>{{currentMatch.scoreB}}</view>
+      </view>
+    </view>
+    
+    <!-- 八人转：局比分录入 -->
+    <view class="game-score-input" wx:if="{{isRotation}}">
+      <view class="input-group">
+        <text class="input-label">{{currentMatch.teamA}} 局比分</text>
+        <picker 
+          mode="selector"
+          range="{{gameScoreOptions}}"
+          range-key="label"
+          value="{{gameScoreAIndex}}"
+          bindchange="onGameScoreChange"
+          data-team="A"
+        >
+          <view class="picker-view">
+            {{gameScoreOptions[gameScoreAIndex].label || '选择局比分'}}
+          </view>
+        </picker>
+      </view>
+      <view class="input-group">
+        <text class="input-label">{{currentMatch.teamB}} 局比分</text>
+        <picker 
+          mode="selector"
+          range="{{gameScoreOptions}}"
+          range-key="label"
+          value="{{gameScoreBIndex}}"
+          bindchange="onGameScoreChange"
+          data-team="B"
+        >
+          <view class="picker-view">
+            {{gameScoreOptions[gameScoreBIndex].label || '选择局比分'}}
+          </view>
+        </picker>
+      </view>
+      <view class="score-hint">
+        <text>2:0 或 1:0 积 2 分；2:1 积 1 分；败北积 0 分</text>
+      </view>
+    </view>
+    
+    <!-- 传统计分：计分按钮 -->
+    <view class="score-buttons" wx:else>
+      <button 
+        class="score-btn btn-primary"
+        bindtap="addScore"
+        data-team="A"
+      >
+        {{currentMatch.teamA}} +1
+      </button>
+      <button 
+        class="score-btn btn-primary"
+        bindtap="addScore"
+        data-team="B"
+      >
+        {{currentMatch.teamB}} +1
+      </button>
+    </view>
+
+    <!-- 重置和完成按钮 -->
+    <view class="action-buttons">
+      <button class="btn-secondary" bindtap="resetScore">重置比分</button>
+      <button class="btn-primary" bindtap="finishMatch">完成比赛</button>
+    </view>
+  </view>
+
+  <!-- 比赛列表 -->
+  <view class="matches-section card">
+    <view class="section-title">比赛记录</view>
+    <view class="match-list">
+      <view 
+        class="match-item"
+        wx:for="{{matches}}"
+        wx:key="id"
+        bindtap="selectMatch"
+        data-id="{{item.id}}"
+      >
+        <view class="match-teams">
+          <text class="team-name">{{item.teamA}}</text>
+          <!-- 八人转显示局比分和积分 -->
+          <view wx:if="{{isRotation && item.gameScoreA}}" class="score-info">
+            <text class="game-score">{{item.gameScoreA.gamesWon}}:{{item.gameScoreA.gamesLost}} / {{item.gameScoreB.gamesWon}}:{{item.gameScoreB.gamesLost}}</text>
+            <text class="points">({{item.pointsA}}:{{item.pointsB}}分)</text>
+          </view>
+          <!-- 传统计分显示分数 -->
+          <text class="score" wx:else>{{item.scoreA}} : {{item.scoreB}}</text>
+          <text class="team-name">{{item.teamB}}</text>
+        </view>
+        <view class="match-status">
+          <text class="status-tag {{item.statusClass}}">{{item.status}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快速添加比赛 -->
+  <view class="add-match-section card">
+    <view class="section-title">添加新比赛</view>
+    <view class="input-group">
+      <text class="input-label">队伍A</text>
+      <input 
+        class="input-field" 
+        placeholder="请输入队伍A名称"
+        value="{{newMatch.teamA}}"
+        bindinput="onTeamInput"
+        data-field="teamA"
+      />
+    </view>
+    <view class="input-group">
+      <text class="input-label">队伍B</text>
+      <input 
+        class="input-field" 
+        placeholder="请输入队伍B名称"
+        value="{{newMatch.teamB}}"
+        bindinput="onTeamInput"
+        data-field="teamB"
+      />
+    </view>
+    <button class="btn-primary" bindtap="addMatch">添加比赛</button>
+  </view>
+</view>
+

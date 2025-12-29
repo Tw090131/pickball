@@ -1,0 +1,146 @@
+/* pages/bracket/bracket.wxss */
+.event-header {
+  margin-bottom: 20rpx;
+}
+
+.bracket-container {
+  height: calc(100vh - 300rpx);
+  margin-bottom: 20rpx;
+}
+
+.bracket-scroll {
+  width: 100%;
+  height: 100%;
+}
+
+.bracket-tree {
+  display: flex;
+  padding: 40rpx 20rpx;
+  min-width: 100%;
+}
+
+.round {
+  display: flex;
+  flex-direction: column;
+  margin-right: 40rpx;
+  min-width: 300rpx;
+}
+
+.round-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20rpx;
+  padding: 10rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+}
+
+.match {
+  margin-bottom: 30rpx;
+}
+
+.match-box {
+  border: 2rpx solid #ddd;
+  border-radius: 8rpx;
+  overflow: hidden;
+  background-color: white;
+}
+
+.match-box.final {
+  border-color: #FFD700;
+  border-width: 3rpx;
+}
+
+.team {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  cursor: pointer;
+}
+
+.team:last-child {
+  border-bottom: none;
+}
+
+.team.winner {
+  background-color: #E8F5E9;
+  font-weight: bold;
+}
+
+.team-name {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+.team-score {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #4CAF50;
+  min-width: 60rpx;
+  text-align: right;
+}
+
+.score-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  width: 80%;
+  max-width: 600rpx;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.score-input-group {
+  margin-bottom: 30rpx;
+}
+
+.score-input-group .input-label {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+}
+
+.score-input {
+  width: 100%;
+  padding: 20rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  font-size: 32rpx;
+  text-align: center;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 40rpx;
+}
+
+.modal-buttons button {
+  flex: 1;
+}
+

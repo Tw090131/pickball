@@ -1,0 +1,112 @@
+<!--pages/game-types/game-types.wxml-->
+<view class="container">
+  <!-- 分类导航 -->
+  <view class="category-tabs">
+    <view 
+      class="tab-item {{currentCategory === 'doubles' ? 'active' : ''}}"
+      bindtap="switchCategory"
+      data-category="doubles"
+    >
+      双打
+    </view>
+    <view 
+      class="tab-item {{currentCategory === 'singles' ? 'active' : ''}}"
+      bindtap="switchCategory"
+      data-category="singles"
+    >
+      单打
+    </view>
+    <view 
+      class="tab-item {{currentCategory === 'versus' ? 'active' : ''}}"
+      bindtap="switchCategory"
+      data-category="versus"
+    >
+      对抗
+    </view>
+    <view 
+      class="tab-item {{currentCategory === 'team' ? 'active' : ''}}"
+      bindtap="switchCategory"
+      data-category="team"
+    >
+      团体
+    </view>
+  </view>
+
+  <!-- 玩法列表 -->
+  <view class="game-list">
+    <view 
+      class="game-card card"
+      wx:for="{{filteredGames}}"
+      wx:key="id"
+      bindtap="goToCreate"
+      data-game="{{item}}"
+    >
+      <view class="game-header">
+        <view class="game-title-row">
+          <text class="game-title">{{item.name}}</text>
+          <view class="game-tags">
+            <text class="tag tag-hot" wx:if="{{item.isHot}}">HOT</text>
+            <text class="tag tag-new" wx:if="{{item.isNew}}">NEW</text>
+          </view>
+        </view>
+        <text class="game-desc">{{item.description}}</text>
+      </view>
+
+      <view class="game-info">
+        <view class="info-item">
+          <text class="info-label">人数范围：</text>
+          <text class="info-value">{{item.playerRange}}</text>
+        </view>
+        <view class="info-item" wx:if="{{item.rounds}}">
+          <text class="info-label">轮数：</text>
+          <text class="info-value">{{item.rounds}}</text>
+        </view>
+        <view class="info-item" wx:if="{{item.scoring}}">
+          <text class="info-label">计分：</text>
+          <text class="info-value">{{item.scoring}}</text>
+        </view>
+      </view>
+
+      <view class="game-footer">
+        <button class="btn-primary create-btn" bindtap="goToCreate" data-game="{{item}}" catchtap="stopPropagation">
+          发起
+        </button>
+        <view class="action-links">
+          <text class="link-text" bindtap="showDetail" data-game="{{item}}" catchtap="stopPropagation">详细介绍</text>
+          <text class="link-text" bindtap="showExample" data-game="{{item}}" catchtap="stopPropagation">示例</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{filteredGames.length === 0}}">
+    <view class="empty-state-icon">🏸</view>
+    <view class="empty-state-text">暂无玩法</view>
+  </view>
+</view>
+
+<!-- 详细介绍弹窗 -->
+<view class="modal" wx:if="{{showDetailModal}}" bindtap="hideDetail">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-header">
+      <text class="modal-title">{{currentGame.name}}</text>
+      <text class="modal-close" bindtap="hideDetail">✕</text>
+    </view>
+    <view class="modal-body">
+      <view class="detail-section">
+        <text class="section-title">玩法说明</text>
+        <text class="section-content">{{currentGame.detailDescription || currentGame.description}}</text>
+      </view>
+      <view class="detail-section" wx:if="{{currentGame.rules}}">
+        <text class="section-title">规则要点</text>
+        <view class="rules-list">
+          <text class="rule-item" wx:for="{{currentGame.rules}}" wx:key="index" wx:for-item="rule">
+            • {{rule}}
+          </text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+

@@ -1,0 +1,177 @@
+<!--pages/bracket/bracket.wxml-->
+<view class="container">
+  <view class="event-header card">
+    <view class="event-title">{{event.title}}</view>
+    <view class="event-meta">淘汰赛 · {{event.scoringSystem}}分制</view>
+  </view>
+
+  <!-- 晋级图 -->
+  <view class="bracket-container">
+    <scroll-view class="bracket-scroll" scroll-x="true" scroll-y="true">
+      <view class="bracket-tree">
+        <!-- 第一轮（16进8） -->
+        <view class="round round-1" wx:if="{{rounds.length >= 1}}">
+          <view class="round-title">第一轮</view>
+          <view 
+            class="match"
+            wx:for="{{rounds[0]}}"
+            wx:key="id"
+            wx:for-index="matchIndex"
+          >
+            <view class="match-box">
+              <view 
+                class="team {{item.teamA.winner ? 'winner' : ''}}"
+                bindtap="selectTeam"
+                data-round="0"
+                data-match="{{matchIndex}}"
+                data-team="A"
+              >
+                <text class="team-name">{{item.teamA.name}}</text>
+                <text class="team-score">{{item.teamA.score}}</text>
+              </view>
+              <view 
+                class="team {{item.teamB.winner ? 'winner' : ''}}"
+                bindtap="selectTeam"
+                data-round="0"
+                data-match="{{matchIndex}}"
+                data-team="B"
+              >
+                <text class="team-name">{{item.teamB.name}}</text>
+                <text class="team-score">{{item.teamB.score}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 第二轮（8进4） -->
+        <view class="round round-2" wx:if="{{rounds.length >= 2}}">
+          <view class="round-title">第二轮</view>
+          <view 
+            class="match"
+            wx:for="{{rounds[1]}}"
+            wx:key="id"
+            wx:for-index="matchIndex"
+          >
+            <view class="match-box">
+              <view 
+                class="team {{item.teamA.winner ? 'winner' : ''}}"
+                bindtap="selectTeam"
+                data-round="1"
+                data-match="{{matchIndex}}"
+                data-team="A"
+              >
+                <text class="team-name">{{item.teamA.name}}</text>
+                <text class="team-score">{{item.teamA.score}}</text>
+              </view>
+              <view 
+                class="team {{item.teamB.winner ? 'winner' : ''}}"
+                bindtap="selectTeam"
+                data-round="1"
+                data-match="{{matchIndex}}"
+                data-team="B"
+              >
+                <text class="team-name">{{item.teamB.name}}</text>
+                <text class="team-score">{{item.teamB.score}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 半决赛（4进2） -->
+        <view class="round round-3" wx:if="{{rounds.length >= 3}}">
+          <view class="round-title">半决赛</view>
+          <view 
+            class="match"
+            wx:for="{{rounds[2]}}"
+            wx:key="id"
+            wx:for-index="matchIndex"
+          >
+            <view class="match-box">
+              <view 
+                class="team {{item.teamA.winner ? 'winner' : ''}}"
+                bindtap="selectTeam"
+                data-round="2"
+                data-match="{{matchIndex}}"
+                data-team="A"
+              >
+                <text class="team-name">{{item.teamA.name}}</text>
+                <text class="team-score">{{item.teamA.score}}</text>
+              </view>
+              <view 
+                class="team {{item.teamB.winner ? 'winner' : ''}}"
+                bindtap="selectTeam"
+                data-round="2"
+                data-match="{{matchIndex}}"
+                data-team="B"
+              >
+                <text class="team-name">{{item.teamB.name}}</text>
+                <text class="team-score">{{item.teamB.score}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 决赛 -->
+        <view class="round round-4" wx:if="{{rounds.length >= 4}}">
+          <view class="round-title">决赛</view>
+          <view class="match">
+            <view class="match-box final">
+              <view 
+                class="team {{rounds[3][0].teamA.winner ? 'winner' : ''}}"
+                bindtap="selectTeam"
+                data-round="3"
+                data-match="0"
+                data-team="A"
+              >
+                <text class="team-name">{{rounds[3][0].teamA.name}}</text>
+                <text class="team-score">{{rounds[3][0].teamA.score}}</text>
+              </view>
+              <view 
+                class="team {{rounds[3][0].teamB.winner ? 'winner' : ''}}"
+                bindtap="selectTeam"
+                data-round="3"
+                data-match="0"
+                data-team="B"
+              >
+                <text class="team-name">{{rounds[3][0].teamB.name}}</text>
+                <text class="team-score">{{rounds[3][0].teamB.score}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 计分弹窗 -->
+  <view class="score-modal" wx:if="{{showScoreModal}}" bindtap="hideScoreModal">
+    <view class="modal-content" catchtap="stopPropagation">
+      <view class="modal-title">录入比分</view>
+      <view class="score-input-group">
+        <text class="input-label">{{currentTeam.teamA}}</text>
+        <input 
+          class="score-input" 
+          type="number"
+          value="{{currentTeam.scoreA}}"
+          bindinput="onScoreInput"
+          data-team="A"
+        />
+      </view>
+      <view class="score-input-group">
+        <text class="input-label">{{currentTeam.teamB}}</text>
+        <input 
+          class="score-input" 
+          type="number"
+          value="{{currentTeam.scoreB}}"
+          bindinput="onScoreInput"
+          data-team="B"
+        />
+      </view>
+      <view class="modal-buttons">
+        <button class="btn-secondary" bindtap="hideScoreModal">取消</button>
+        <button class="btn-primary" bindtap="saveScore">保存</button>
+      </view>
+    </view>
+  </view>
+</view>
+
