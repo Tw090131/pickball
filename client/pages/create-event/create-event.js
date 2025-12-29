@@ -63,6 +63,21 @@ Page({
   },
 
   onLoad(options) {
+    // 检查登录状态
+    if (!app.globalData.isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '发布活动需要先登录',
+        showCancel: false,
+        success: () => {
+          wx.switchTab({
+            url: '/pages/profile/profile'
+          });
+        }
+      });
+      return;
+    }
+
     // 从游戏类型页面传参
     if (options.gameType) {
       this.setData({
@@ -151,7 +166,7 @@ Page({
     });
   },
 
-  // 格式化时间
+  // 格式化时间（显示用）
   formatPickerTime(dateIndex, hourIndex, minuteIndex) {
     const dates = this.data.timePickerRange[0];
     const hours = this.data.timePickerRange[1];
@@ -170,6 +185,21 @@ Page({
 
     const fullDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute);
     return app.formatTime(fullDate);
+  },
+
+  // 转换为 ISO 8601 格式（提交用）
+  formatISO8601(dateIndex, hourIndex, minuteIndex) {
+    const today = new Date();
+    const dayOffset = dateIndex;
+    const date = new Date(today.getTime() + dayOffset * 24 * 60 * 60 * 1000);
+    
+    const hours = this.data.timePickerRange[1];
+    const minutes = this.data.timePickerRange[2];
+    const hour = parseInt(hours[hourIndex]);
+    const minute = parseInt(minutes[minuteIndex]);
+
+    const fullDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute);
+    return fullDate.toISOString();
   },
 
   // 输入框变化
@@ -193,30 +223,36 @@ Page({
   // 开始时间选择
   onStartTimeChange(e) {
     const indices = e.detail.value;
-    const time = this.formatPickerTime(indices[0], indices[1], indices[2]);
+    const displayTime = this.formatPickerTime(indices[0], indices[1], indices[2]);
+    const isoTime = this.formatISO8601(indices[0], indices[1], indices[2]);
     this.setData({
       startTimeIndex: indices,
-      'formData.startTime': time
+      'formData.startTime': displayTime,
+      'formData.startTimeISO': isoTime
     });
   },
 
   // 结束时间选择
   onEndTimeChange(e) {
     const indices = e.detail.value;
-    const time = this.formatPickerTime(indices[0], indices[1], indices[2]);
+    const displayTime = this.formatPickerTime(indices[0], indices[1], indices[2]);
+    const isoTime = this.formatISO8601(indices[0], indices[1], indices[2]);
     this.setData({
       endTimeIndex: indices,
-      'formData.endTime': time
+      'formData.endTime': displayTime,
+      'formData.endTimeISO': isoTime
     });
   },
 
   // 截止时间选择
   onDeadlineChange(e) {
     const indices = e.detail.value;
-    const time = this.formatPickerTime(indices[0], indices[1], indices[2]);
+    const displayTime = this.formatPickerTime(indices[0], indices[1], indices[2]);
+    const isoTime = this.formatISO8601(indices[0], indices[1], indices[2]);
     this.setData({
       deadlineIndex: indices,
-      'formData.registrationDeadline': time
+      'formData.registrationDeadline': displayTime,
+      'formData.registrationDeadlineISO': isoTime
     });
   },
 
@@ -291,91 +327,99 @@ Page({
   validateForm() {
     const { formData } = this.data;
     
-    if (!formData.title.trim()) {
-      wx.showToast({ title: '请输入活动标题', icon: 'none' });
+    // 验证标题
+    if (!formData.title || !formData.title.trim()) {
+      wx.showToast({ title: '请输入活动标题', icon: 'none', duration: 2000 });
       return false;
     }
-    if (!formData.location.trim()) {
-      wx.showToast({ title: '请输入活动地点', icon: 'none' });
+    if (formData.title.trim().length < 2) {
+      wx.showToast({ title: '标题至少需要2个字符', icon: 'none', duration: 2000 });
       return false;
     }
-    if (!formData.startTime) {
-      wx.showToast({ title: '请选择开始时间', icon: 'none' });
+    if (formData.title.trim().length > 50) {
+      wx.showToast({ title: '标题不能超过50个字符', icon: 'none', duration: 2000 });
       return false;
     }
-    if (!formData.endTime) {
-      wx.showToast({ title: '请选择结束时间', icon: 'none' });
+
+    // 验证地点
+    if (!formData.location || !formData.location.trim()) {
+      wx.showToast({ title: '请输入活动地点', icon: 'none', duration: 2000 });
       return false;
     }
-    if (!formData.registrationDeadline) {
-      wx.showToast({ title: '请选择报名截止时间', icon: 'none' });
+    if (!this.data.latitude || !this.data.longitude) {
+      wx.showToast({ title: '请选择准确的位置信息', icon: 'none', duration: 2000 });
       return false;
     }
-    // 验证人数范围
+
+    // 验证时间
+    if (!formData.startTimeISO) {
+      wx.showToast({ title: '请选择开始时间', icon: 'none', duration: 2000 });
+      return false;
+    }
+    if (!formData.endTimeISO) {
+      wx.showToast({ title: '请选择结束时间', icon: 'none', duration: 2000 });
+      return false;
+    }
+    if (!formData.registrationDeadlineISO) {
+      wx.showToast({ title: '请选择报名截止时间', icon: 'none', duration: 2000 });
+      return false;
+    }
+
+    // 验证人数
     const maxParticipants = parseInt(formData.maxParticipants);
     if (!maxParticipants || maxParticipants <= 0) {
-      wx.showToast({ title: '请输入最大参与人数', icon: 'none' });
+      wx.showToast({ title: '请输入有效的最大参与人数', icon: 'none', duration: 2000 });
+      return false;
+    }
+    if (maxParticipants > 100) {
+      wx.showToast({ title: '最大参与人数不能超过100人', icon: 'none', duration: 2000 });
       return false;
     }
     
     // 八人转人数验证
-    if (this.data.rotationType === 'eight_rotation') {
-      if (maxParticipants < this.data.minPlayers || maxParticipants > this.data.maxPlayers) {
+    if (formData.rotationRule === '八人转') {
+      if (maxParticipants < 4 || maxParticipants > 13) {
         wx.showToast({ 
-          title: `八人转支持 ${this.data.minPlayers}-${this.data.maxPlayers} 人`, 
-          icon: 'none' 
-        });
-        return false;
-      }
-    }
-    
-    // 验证时间逻辑
-    if (formData.startTime && formData.endTime) {
-      const start = new Date(formData.startTime);
-      const end = new Date(formData.endTime);
-      if (end <= start) {
-        wx.showToast({ title: '结束时间必须晚于开始时间', icon: 'none' });
-        return false;
-      }
-    }
-    
-    if (formData.registrationDeadline && formData.startTime) {
-      const deadline = new Date(formData.registrationDeadline);
-      const start = new Date(formData.startTime);
-      if (deadline >= start) {
-        wx.showToast({ title: '报名截止时间必须早于开始时间', icon: 'none' });
-        return false;
-      }
-    }
-    
-    if (!formData.maxParticipants || parseInt(formData.maxParticipants) <= 0) {
-      wx.showToast({ title: '请输入有效的最大人数', icon: 'none' });
-      return false;
-    }
-
-    // 八人转人数验证
-    if (this.data.rotationType === 'eight_rotation') {
-      const maxParticipants = parseInt(formData.maxParticipants);
-      if (maxParticipants < this.data.minPlayers || maxParticipants > this.data.maxPlayers) {
-        wx.showToast({ 
-          title: `八人转支持 ${this.data.minPlayers}-${this.data.maxPlayers} 人`, 
-          icon: 'none' 
+          title: '八人转支持 4-13 人参与', 
+          icon: 'none',
+          duration: 2000
         });
         return false;
       }
     }
 
     // 验证时间逻辑
-    const startTime = new Date(formData.startTime);
-    const endTime = new Date(formData.endTime);
-    const deadline = new Date(formData.registrationDeadline);
+    const startTime = new Date(formData.startTimeISO);
+    const endTime = new Date(formData.endTimeISO);
+    const deadline = new Date(formData.registrationDeadlineISO);
+    const now = new Date();
 
+    // 开始时间不能早于当前时间
+    if (startTime <= now) {
+      wx.showToast({ title: '开始时间必须晚于当前时间', icon: 'none', duration: 2000 });
+      return false;
+    }
+
+    // 结束时间必须晚于开始时间
     if (endTime <= startTime) {
-      wx.showToast({ title: '结束时间必须晚于开始时间', icon: 'none' });
+      wx.showToast({ title: '结束时间必须晚于开始时间', icon: 'none', duration: 2000 });
       return false;
     }
+
+    // 报名截止时间必须早于开始时间
     if (deadline >= startTime) {
-      wx.showToast({ title: '报名截止时间必须早于开始时间', icon: 'none' });
+      wx.showToast({ title: '报名截止时间必须早于开始时间', icon: 'none', duration: 2000 });
+      return false;
+    }
+
+    // 验证报名费
+    const registrationFee = parseFloat(formData.registrationFee) || 0;
+    if (registrationFee < 0) {
+      wx.showToast({ title: '报名费不能为负数', icon: 'none', duration: 2000 });
+      return false;
+    }
+    if (registrationFee > 10000) {
+      wx.showToast({ title: '报名费不能超过10000元', icon: 'none', duration: 2000 });
       return false;
     }
 
@@ -384,6 +428,21 @@ Page({
 
   // 提交活动
   async submitEvent() {
+    // 检查登录状态
+    if (!app.globalData.isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '发布活动需要先登录',
+        showCancel: false,
+        success: () => {
+          wx.switchTab({
+            url: '/pages/profile/profile'
+          });
+        }
+      });
+      return;
+    }
+
     // 防止重复提交
     if (this.data.submitting) {
       return;
@@ -394,19 +453,19 @@ Page({
     }
 
     this.setData({ submitting: true });
-    wx.showLoading({ title: '发布中...' });
+    wx.showLoading({ title: '发布中...', mask: true });
 
     try {
       // 准备提交数据
       const submitData = {
-        title: this.data.formData.title,
+        title: this.data.formData.title.trim(),
         category: this.data.formData.category,
-        location: this.data.formData.location,
-        latitude: this.data.latitude || 39.9042, // 默认值，实际应该从地图选择获取
-        longitude: this.data.longitude || 116.4074,
-        startTime: this.data.formData.startTime,
-        endTime: this.data.formData.endTime,
-        registrationDeadline: this.data.formData.registrationDeadline,
+        location: this.data.formData.location.trim(),
+        latitude: this.data.latitude,
+        longitude: this.data.longitude,
+        startTime: this.data.formData.startTimeISO,
+        endTime: this.data.formData.endTimeISO,
+        registrationDeadline: this.data.formData.registrationDeadlineISO,
         format: {
           type: this.data.formats[this.data.formData.formatIndex],
           rule: this.data.formData.rotationRule,
@@ -416,18 +475,36 @@ Page({
         scoringSystem: this.data.formData.scoringSystem,
         maxParticipants: parseInt(this.data.formData.maxParticipants),
         registrationFee: parseFloat(this.data.formData.registrationFee) || 0,
-        description: this.data.formData.description || '',
-        // 八人转特殊配置
-        rotationConfig: {
-          specialMode: this.data.formData.maxParticipants == 6 ? this.data.sixPlayerMode :
-                      this.data.formData.maxParticipants == 7 ? this.data.sevenPlayerMode : null,
-          enableHandicap: this.data.enableHandicap,
-          handicapRules: this.data.enableHandicap ? {
-            type: this.data.handicapTemplates[this.data.handicapTemplateIndex].value,
-            enabled: true
-          } : null
-        }
+        description: (this.data.formData.description || '').trim()
       };
+
+      // 八人转特殊配置
+      if (this.data.formData.rotationRule === '八人转') {
+        const maxParticipants = parseInt(this.data.formData.maxParticipants);
+        submitData.rotationConfig = {
+          enableHandicap: this.data.enableHandicap
+        };
+
+        // 6人或7人的特殊模式
+        if (maxParticipants === 6) {
+          submitData.rotationConfig.specialMode = this.data.sixPlayerMode;
+        } else if (maxParticipants === 7) {
+          submitData.rotationConfig.specialMode = this.data.sevenPlayerMode;
+        }
+
+        // 让分规则
+        if (this.data.enableHandicap) {
+          const template = this.data.handicapTemplates[this.data.handicapTemplateIndex];
+          if (template.value !== 'none') {
+            submitData.rotationConfig.handicapRules = {
+              type: template.value,
+              enabled: true
+            };
+          }
+        }
+      }
+
+      console.log('提交数据:', submitData);
 
       // 调用 API 创建赛事
       const { createEvent } = require('../../utils/api');
@@ -461,10 +538,21 @@ Page({
       console.error('提交活动失败', err);
       wx.hideLoading();
       this.setData({ submitting: false });
-      wx.showToast({
-        title: err.message || '发布失败，请重试',
-        icon: 'none',
-        duration: 3000
+      
+      let errorMsg = '发布失败，请重试';
+      if (err.message) {
+        errorMsg = err.message;
+      } else if (err.response && err.response.data && err.response.data.message) {
+        errorMsg = err.response.data.message;
+      } else if (err.data && err.data.message) {
+        errorMsg = err.data.message;
+      }
+
+      wx.showModal({
+        title: '发布失败',
+        content: errorMsg,
+        showCancel: false,
+        confirmText: '知道了'
       });
     }
   },
@@ -478,8 +566,11 @@ Page({
         categoryIndex: 0,
         location: '',
         startTime: '',
+        startTimeISO: '',
         endTime: '',
+        endTimeISO: '',
         registrationDeadline: '',
+        registrationDeadlineISO: '',
         format: '双打',
         formatIndex: 1,
         rotationRule: '八人转',
@@ -496,6 +587,9 @@ Page({
       sixPlayerModeIndex: 0,
       sevenPlayerModeIndex: 0,
       handicapTemplateIndex: 0,
+      startTimeIndex: [0, 0, 0],
+      endTimeIndex: [0, 0, 0],
+      deadlineIndex: [0, 0, 0],
       latitude: null,
       longitude: null
     });
