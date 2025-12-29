@@ -376,6 +376,22 @@ router.delete('/:id', authenticate, async (req, res, next) => {
       });
     }
 
+    // 检查是否有报名记录
+    const Registration = require('../models/Registration');
+    const registrationCount = await Registration.countDocuments({ event: req.params.id });
+    
+    if (registrationCount > 0) {
+      // 如果有报名记录，可以选择：
+      // 1. 不允许删除（推荐）
+      // 2. 同时删除所有报名记录
+      // 这里采用方案1：不允许删除已有报名的活动
+      return res.status(400).json({
+        success: false,
+        message: `该活动已有 ${registrationCount} 人报名，无法删除。如需删除，请先取消所有报名。`
+      });
+    }
+
+    // 删除活动
     await event.deleteOne();
 
     res.json({

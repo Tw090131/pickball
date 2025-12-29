@@ -215,6 +215,16 @@ const getMyCreatedEvents = (params) => {
   })
 }
 
+/**
+ * 删除活动
+ */
+const deleteEvent = (eventId) => {
+  return request({
+    url: `${baseURL}/events/${eventId}`,
+    method: 'DELETE'
+  })
+}
+
 module.exports = {
   baseURL,
   getEventList,
@@ -235,6 +245,7 @@ module.exports = {
   getUserInfo,
   getUserStats,
   getUserRecord,
-  getMyCreatedEvents
+  getMyCreatedEvents,
+  deleteEvent
 }
 

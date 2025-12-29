@@ -46,10 +46,9 @@
       <view class="event-actions" wx:if="{{type === 'created'}}">
         <button 
           class="btn-delete"
-          bindtap="deleteEvent"
+          catchtap="deleteEvent"
           data-id="{{item.id}}"
           data-title="{{item.title}}"
-          catchtap="true"
         >
           删除
         </button>

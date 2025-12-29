@@ -1,7 +1,6 @@
 // pages/my-events/my-events.js
 const app = getApp();
-const { getMyCreatedEvents, getMyRegistrations, baseURL } = require('../../utils/api');
-const { request } = require('../../utils/util');
+const { getMyCreatedEvents, getMyRegistrations, deleteEvent: deleteEventAPI } = require('../../utils/api');
 
 Page({
   data: {
@@ -226,10 +225,21 @@ Page({
 
   // 删除活动（仅我发布的）
   async deleteEvent(e) {
-    e.stopPropagation(); // 阻止事件冒泡
+    // 注意：已经在 wxml 中使用 catchtap 阻止事件冒泡，这里不需要再调用 stopPropagation
     
     const eventId = e.currentTarget.dataset.id;
     const eventTitle = e.currentTarget.dataset.title || '这个活动';
+
+    console.log('准备删除活动:', { eventId, eventTitle });
+
+    if (!eventId) {
+      wx.showToast({
+        title: '活动ID不存在',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
 
     wx.showModal({
       title: '确认删除',
@@ -241,19 +251,20 @@ Page({
           try {
             wx.showLoading({ title: '删除中...' });
             
+            console.log('调用删除接口，eventId:', eventId);
+            
             // 调用删除接口
-            const deleteRes = await request({
-              url: `${baseURL}/events/${eventId}`,
-              method: 'DELETE',
-              showLoading: false
-            });
+            const deleteRes = await deleteEventAPI(eventId);
+
+            console.log('删除接口响应:', deleteRes);
 
             wx.hideLoading();
 
-            if (deleteRes.success) {
+            if (deleteRes && deleteRes.success) {
               wx.showToast({
                 title: '删除成功',
-                icon: 'success'
+                icon: 'success',
+                duration: 2000
               });
               
               // 刷新列表
@@ -261,15 +272,26 @@ Page({
                 this.loadEvents();
               }, 1000);
             } else {
-              throw new Error(deleteRes.message || '删除失败');
+              const errorMsg = deleteRes?.message || deleteRes?.data?.message || '删除失败';
+              console.error('删除失败，响应:', deleteRes);
+              throw new Error(errorMsg);
             }
           } catch (err) {
             console.error('删除活动失败', err);
             wx.hideLoading();
-            wx.showToast({
-              title: err.message || '删除失败',
-              icon: 'none',
-              duration: 2000
+            
+            let errorMessage = '删除失败，请重试';
+            if (err.message) {
+              errorMessage = err.message;
+            } else if (err.code) {
+              errorMessage = `删除失败 (${err.code})`;
+            }
+            
+            wx.showModal({
+              title: '删除失败',
+              content: errorMessage,
+              showCancel: false,
+              confirmText: '知道了'
             });
           }
         }
