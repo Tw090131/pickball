@@ -1,0 +1,90 @@
+/* pages/my-events/my-events.wxss */
+.event-list {
+  padding: 20rpx;
+}
+
+.event-card {
+  margin-bottom: 20rpx;
+  position: relative;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.event-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+}
+
+.status-tag {
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  color: white;
+}
+
+.event-info {
+  margin-bottom: 20rpx;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.info-icon {
+  margin-right: 10rpx;
+  font-size: 28rpx;
+}
+
+.event-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+  margin-top: 20rpx;
+}
+
+.btn-delete {
+  padding: 12rpx 30rpx;
+  background-color: #F44336;
+  color: white;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  border: none;
+}
+
+.btn-delete:active {
+  background-color: #D32F2F;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 40rpx;
+  text-align: center;
+}
+
+.empty-state-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.5;
+}
+
+.empty-state-text {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+

@@ -131,8 +131,23 @@ Page({
       } finally {
         this.setData({ loadingRecord: false });
       }
+
+      // 加载统计数据（报名数、发布数等）
+      try {
+        const { getUserStats } = require('../../utils/api');
+        const statsRes = await getUserStats(userId);
+        
+        if (statsRes.success && statsRes.data.stats) {
+          this.setData({
+            registeredCount: statsRes.data.stats.registeredCount || 0,
+            createdCount: statsRes.data.stats.createdCount || 0
+          });
+        }
+      } catch (err) {
+        console.error('加载统计数据失败', err);
+      }
     } catch (err) {
-      console.error('加载战绩失败', err);
+      console.error('加载统计数据失败', err);
       this.setData({ loadingRecord: false });
     }
   },
@@ -334,10 +349,28 @@ Page({
   // 跳转到我的活动
   goToMyEvents(e) {
     const type = e.currentTarget.dataset.type;
-    wx.showToast({
-      title: `${type === 'registered' ? '已报名' : type === 'created' ? '我发布的' : '历史记录'}功能开发中`,
-      icon: 'none'
-    });
+    
+    if (type === 'created') {
+      // 跳转到"我发布的"页面
+      wx.navigateTo({
+        url: '/pages/my-events/my-events?type=created'
+      });
+    } else if (type === 'registered') {
+      // 跳转到"已报名"页面
+      wx.navigateTo({
+        url: '/pages/my-events/my-events?type=registered'
+      });
+    } else if (type === 'history') {
+      // 跳转到"历史记录"页面
+      wx.navigateTo({
+        url: '/pages/my-events/my-events?type=history'
+      });
+    } else {
+      wx.showToast({
+        title: '功能开发中',
+        icon: 'none'
+      });
+    }
   },
 
   // 显示关于我们

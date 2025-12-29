@@ -18,7 +18,8 @@ router.get('/', optionalAuth, async (req, res, next) => {
       page = 1,
       limit = 20,
       latitude,
-      longitude
+      longitude,
+      organizer // 新增：按组织者筛选
     } = req.query;
 
     // 构建查询条件
@@ -28,6 +29,9 @@ router.get('/', optionalAuth, async (req, res, next) => {
     }
     if (status) {
       query.status = status;
+    }
+    if (organizer) {
+      query.organizer = organizer;
     }
 
     // 分页

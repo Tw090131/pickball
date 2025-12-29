@@ -204,7 +204,19 @@ const getUserRecord = (userId) => {
   })
 }
 
+/**
+ * 获取我发布的活动列表
+ */
+const getMyCreatedEvents = (params) => {
+  return request({
+    url: `${baseURL}/events`,
+    method: 'GET',
+    data: params
+  })
+}
+
 module.exports = {
+  baseURL,
   getEventList,
   getEventDetail,
   createEvent,
@@ -222,6 +234,7 @@ module.exports = {
   requestRefund,
   getUserInfo,
   getUserStats,
-  getUserRecord
+  getUserRecord,
+  getMyCreatedEvents
 }
 

@@ -1,0 +1,87 @@
+<!--pages/my-events/my-events.wxml-->
+<view class="container">
+  <!-- 活动列表 -->
+  <view class="event-list">
+    <view 
+      class="event-card card"
+      wx:for="{{events}}"
+      wx:key="id"
+      bindtap="goToEventDetail"
+      data-id="{{item.id}}"
+    >
+      <view class="event-header">
+        <view class="event-title">{{item.title}}</view>
+        <view class="status-tag {{item.statusClass}}">{{item.statusText}}</view>
+      </view>
+      
+      <view class="event-info">
+        <view class="info-item">
+          <text class="info-icon">📅</text>
+          <text>{{item.startTimeFormatted}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-icon">📍</text>
+          <text>{{item.location}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-icon">👥</text>
+          <text>{{item.currentParticipants}}/{{item.maxParticipants}}人</text>
+          <text class="tag tag-danger" wx:if="{{item.isFull}}" style="margin-left: 10rpx; font-size: 20rpx;">已满</text>
+        </view>
+        <view class="info-item">
+          <text class="info-icon">🏆</text>
+          <text>{{item.formatText}} · {{item.scoringSystem}}分制</text>
+        </view>
+        <view class="info-item">
+          <text class="info-icon">🔄</text>
+          <text>{{item.rotationRule}}</text>
+        </view>
+        <view class="info-item" wx:if="{{item.registrationFee > 0}}">
+          <text class="info-icon">💰</text>
+          <text>报名费：¥{{item.registrationFee}}</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮（仅我发布的显示） -->
+      <view class="event-actions" wx:if="{{type === 'created'}}">
+        <button 
+          class="btn-delete"
+          bindtap="deleteEvent"
+          data-id="{{item.id}}"
+          data-title="{{item.title}}"
+          catchtap="true"
+        >
+          删除
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="empty-state" wx:if="{{loading}}">
+    <view class="empty-state-icon">⏳</view>
+    <view class="empty-state-text">加载中...</view>
+  </view>
+
+  <!-- 错误状态 -->
+  <view class="empty-state" wx:if="{{!loading && error}}">
+    <view class="empty-state-icon">⚠️</view>
+    <view class="empty-state-text">{{error}}</view>
+    <button class="btn-primary" bindtap="loadEvents" style="margin-top: 20rpx;">重试</button>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && !error && events.length === 0}}">
+    <view class="empty-state-icon">📋</view>
+    <view class="empty-state-text">{{emptyText}}</view>
+    <button 
+      class="btn-primary" 
+      wx:if="{{type === 'created'}}"
+      bindtap="goToCreate"
+      style="margin-top: 20rpx;"
+    >
+      去发布活动
+    </button>
+  </view>
+</view>
+

@@ -8,7 +8,8 @@
     "pages/scoreboard/scoreboard",
     "pages/ranking/ranking",
     "pages/bracket/bracket",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/my-events/my-events"
   ],
   "window": {
     "backgroundTextStyle": "light",
