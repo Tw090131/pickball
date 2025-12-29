@@ -1,16 +1,19 @@
 // pages/event-detail/event-detail.js
 const app = getApp();
+const { getEventDetail } = require('../../utils/api');
 
 Page({
   data: {
     eventId: null,
     event: {},
     participants: [],
-    isRegistered: false
+    isRegistered: false,
+    loading: true,
+    error: null
   },
 
   onLoad(options) {
-    const id = parseInt(options.id);
+    const id = options.id;
     this.setData({
       eventId: id
     });
@@ -18,35 +21,125 @@ Page({
   },
 
   // 加载赛事详情
-  loadEventDetail() {
-    // 模拟数据，实际应该从服务器获取
-    const mockEvent = this.getMockEvent(this.data.eventId);
+  async loadEventDetail() {
+    this.setData({ loading: true, error: null });
     
-    const distance = app.globalData.location 
-      ? app.calculateDistance(
-          app.globalData.location.latitude,
-          app.globalData.location.longitude,
-          mockEvent.latitude,
-          mockEvent.longitude
-        )
-      : null;
+    try {
+      const res = await getEventDetail(this.data.eventId);
+      
+      if (res && res.success && res.data && res.data.event) {
+        const eventData = res.data.event;
+        
+        // 计算距离
+        const distance = app.globalData.location 
+          ? app.calculateDistance(
+              app.globalData.location.latitude,
+              app.globalData.location.longitude,
+              eventData.latitude,
+              eventData.longitude
+            )
+          : null;
 
-    const status = app.getEventStatus(mockEvent);
-    let statusClass = 'tag-default';
-    if (status === '报名中') statusClass = 'tag-primary';
-    else if (status === '比赛中') statusClass = 'tag-warning';
-    else if (status === '已结束') statusClass = 'tag-danger';
+        // 处理状态
+        let status = '报名中';
+        let statusClass = 'tag-primary';
+        if (eventData.status === 'registering') {
+          status = '报名中';
+          statusClass = 'tag-primary';
+        } else if (eventData.status === 'in_progress') {
+          status = '比赛中';
+          statusClass = 'tag-warning';
+        } else if (eventData.status === 'ended') {
+          status = '已结束';
+          statusClass = 'tag-danger';
+        } else if (eventData.status === 'cancelled') {
+          status = '已取消';
+          statusClass = 'tag-default';
+        }
 
-    this.setData({
-      event: {
-        ...mockEvent,
-        distance: distance ? distance.toFixed(1) : null,
-        status,
-        statusClass
-      },
-      participants: this.getMockParticipants(),
-      isRegistered: false // 实际应该检查当前用户是否已报名
-    });
+        // 格式化时间
+        const formatDateTime = (dateStr) => {
+          if (!dateStr) return '';
+          const date = new Date(dateStr);
+          const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+          const year = date.getFullYear();
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const day = date.getDate().toString().padStart(2, '0');
+          const hour = date.getHours().toString().padStart(2, '0');
+          const minute = date.getMinutes().toString().padStart(2, '0');
+          const weekday = weekdays[date.getDay()];
+          return `${year}/${month}/${day} ( ${weekday} ) ${hour}:${minute}`;
+        };
+
+        // 处理报名费显示
+        let feeText = '免费';
+        let feeModeText = '';
+        if (eventData.feeMode === 'free') {
+          feeText = '免费';
+          feeModeText = '活动完全免费';
+        } else if (eventData.feeMode === 'aa') {
+          feeText = '赛后AA';
+          feeModeText = '活动结束后AA平摊场地费用';
+        } else if (eventData.feeMode === 'prepay') {
+          feeText = `¥${eventData.registrationFee || 0}`;
+          feeModeText = '报名时需先支付费用';
+        } else {
+          // 兼容旧数据：如果没有 feeMode，根据 registrationFee 判断
+          if (eventData.registrationFee > 0) {
+            feeText = `¥${eventData.registrationFee}`;
+            feeModeText = '报名时需先支付费用';
+          } else {
+            feeText = '免费';
+            feeModeText = '活动完全免费';
+          }
+        }
+
+        this.setData({
+          event: {
+            id: eventData.id || eventData._id,
+            title: eventData.title,
+            category: eventData.category,
+            startTime: formatDateTime(eventData.startTime),
+            endTime: formatDateTime(eventData.endTime),
+            registrationDeadline: formatDateTime(eventData.registrationDeadline),
+            location: eventData.location,
+            latitude: eventData.latitude,
+            longitude: eventData.longitude,
+            distance: distance ? distance.toFixed(1) : null,
+            format: eventData.format?.type || '未知',
+            scoringSystem: eventData.scoringSystem || 11,
+            rotationRule: eventData.rotationRule || '未知',
+            maxParticipants: eventData.maxParticipants || 0,
+            currentParticipants: eventData.currentParticipants || 0,
+            registrationFee: eventData.registrationFee || 0,
+            feeMode: eventData.feeMode || 'free',
+            feeText: feeText,
+            feeModeText: feeModeText,
+            organizer: eventData.organizer?.name || eventData.organizerName || '未知组织',
+            organizerAvatar: eventData.organizer?.avatar || eventData.organizerAvatar || '',
+            description: eventData.description || '',
+            status,
+            statusClass
+          },
+          participants: [], // TODO: 从服务器获取报名人员列表
+          isRegistered: false, // TODO: 检查当前用户是否已报名
+          loading: false
+        });
+      } else {
+        throw new Error(res?.message || '获取活动详情失败');
+      }
+    } catch (err) {
+      console.error('加载活动详情失败', err);
+      this.setData({
+        loading: false,
+        error: err.message || '加载失败，请稍后重试'
+      });
+      wx.showToast({
+        title: err.message || '加载失败',
+        icon: 'none',
+        duration: 2000
+      });
+    }
   },
 
   // 模拟赛事数据

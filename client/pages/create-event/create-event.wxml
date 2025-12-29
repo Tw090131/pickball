@@ -163,16 +163,32 @@
       </view>
 
       <view class="input-group">
-        <text class="input-label">报名费（元）</text>
-        <input 
-          class="input-field" 
-          type="digit"
-          placeholder="0表示免费（含场地费平摊）"
-          value="{{formData.registrationFee}}"
-          bindinput="onInput"
-          data-field="registrationFee"
-        />
-        <text class="input-hint">报名费将平摊场地费用</text>
+        <text class="input-label">报名费用</text>
+        <picker 
+          mode="selector" 
+          range="{{feeModes}}"
+          range-key="label"
+          value="{{formData.feeModeIndex}}"
+          bindchange="onFeeModeChange"
+        >
+          <view class="picker-view">
+            {{feeModes[formData.feeModeIndex].label}}
+          </view>
+        </picker>
+        <text class="input-hint">{{feeModes[formData.feeModeIndex].hint}}</text>
+        
+        <!-- 如果是赛前收款，显示金额输入框 -->
+        <view class="input-group" wx:if="{{formData.feeModeIndex === 2}}" style="margin-top: 10px;">
+          <text class="input-label">收款金额（元）*</text>
+          <input 
+            class="input-field" 
+            type="digit"
+            placeholder="请输入收款金额"
+            value="{{formData.registrationFee}}"
+            bindinput="onInput"
+            data-field="registrationFee"
+          />
+        </view>
       </view>
 
       <!-- 八人转特殊设置 -->

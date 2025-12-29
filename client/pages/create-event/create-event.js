@@ -19,6 +19,7 @@ Page({
       scoringSystemIndex: 0,
       maxParticipants: '',
       registrationFee: '0',
+      feeModeIndex: 0, // 0: 免费参与, 1: 赛后AA收款, 2: 赛前收款
       description: ''
     },
     submitting: false, // 防止重复提交
@@ -56,6 +57,11 @@ Page({
     formats: ['单打', '双打', '混双'],
     rotationRules: ['八人转', '五人转', '淘汰赛', '分组循环'],
     scoringSystems: [11, 21, 31],
+    feeModes: [
+      { value: 'free', label: '免费参与', hint: '活动完全免费，无需支付任何费用' },
+      { value: 'aa', label: '赛后AA收款', hint: '活动结束后，参与者AA平摊场地费用' },
+      { value: 'prepay', label: '赛前收款', hint: '报名时需先支付费用（含场地费等）' }
+    ],
     startTimeIndex: [0, 0, 0],
     endTimeIndex: [0, 0, 0],
     deadlineIndex: [0, 0, 0],
@@ -209,6 +215,23 @@ Page({
     this.setData({
       [`formData.${field}`]: value
     });
+  },
+
+  // 报名费用模式选择
+  onFeeModeChange(e) {
+    const index = parseInt(e.detail.value);
+    const feeMode = this.data.feeModes[index];
+    this.setData({
+      'formData.feeModeIndex': index,
+      'formData.feeMode': feeMode.value
+    });
+    
+    // 如果不是赛前收款，清空金额
+    if (feeMode.value !== 'prepay') {
+      this.setData({
+        'formData.registrationFee': '0'
+      });
+    }
   },
 
   // 分类选择
@@ -412,15 +435,23 @@ Page({
       return false;
     }
 
-    // 验证报名费
-    const registrationFee = parseFloat(formData.registrationFee) || 0;
-    if (registrationFee < 0) {
-      wx.showToast({ title: '报名费不能为负数', icon: 'none', duration: 2000 });
-      return false;
-    }
-    if (registrationFee > 10000) {
-      wx.showToast({ title: '报名费不能超过10000元', icon: 'none', duration: 2000 });
-      return false;
+    // 验证报名费（仅赛前收款需要验证金额）
+    const feeModeIndex = formData.feeModeIndex || 0;
+    const feeMode = this.data.feeModes[feeModeIndex];
+    if (feeMode && feeMode.value === 'prepay') {
+      const registrationFee = parseFloat(formData.registrationFee) || 0;
+      if (!formData.registrationFee || formData.registrationFee.trim() === '') {
+        wx.showToast({ title: '请输入收款金额', icon: 'none', duration: 2000 });
+        return false;
+      }
+      if (registrationFee <= 0) {
+        wx.showToast({ title: '收款金额必须大于0', icon: 'none', duration: 2000 });
+        return false;
+      }
+      if (registrationFee > 10000) {
+        wx.showToast({ title: '收款金额不能超过10000元', icon: 'none', duration: 2000 });
+        return false;
+      }
     }
 
     return true;
@@ -474,7 +505,10 @@ Page({
         rotationRule: this.data.formData.rotationRule,
         scoringSystem: this.data.formData.scoringSystem,
         maxParticipants: parseInt(this.data.formData.maxParticipants),
-        registrationFee: parseFloat(this.data.formData.registrationFee) || 0,
+        registrationFee: (this.data.feeModes[this.data.formData.feeModeIndex || 0]?.value === 'prepay') 
+          ? parseFloat(this.data.formData.registrationFee) || 0 
+          : 0,
+        feeMode: this.data.feeModes[this.data.formData.feeModeIndex || 0]?.value || 'free', // 费用模式
         description: (this.data.formData.description || '').trim()
       };
 

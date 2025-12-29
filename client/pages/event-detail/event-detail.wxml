@@ -56,9 +56,11 @@
         <text>{{event.currentParticipants}}/{{event.maxParticipants}}人</text>
       </view>
       <view class="info-row">
-        <text class="label">报名费：</text>
-        <text class="fee" wx:if="{{event.registrationFee > 0}}">¥{{event.registrationFee}}</text>
-        <text wx:else>免费</text>
+        <text class="label">报名费用：</text>
+        <view class="fee-info">
+          <text class="fee">{{event.feeText || (event.registrationFee > 0 ? '¥' + event.registrationFee : '免费')}}</text>
+          <text class="fee-hint" wx:if="{{event.feeModeText}}">（{{event.feeModeText}}）</text>
+        </view>
       </view>
     </view>
 

@@ -61,9 +61,21 @@
   font-weight: bold;
 }
 
+.fee-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .fee {
   color: #F44336;
   font-weight: bold;
+  margin-bottom: 5rpx;
+}
+
+.fee-hint {
+  font-size: 24rpx;
+  color: #999;
 }
 
 .description {

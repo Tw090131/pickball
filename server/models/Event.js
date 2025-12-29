@@ -87,6 +87,11 @@ const eventSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  feeMode: {
+    type: String,
+    enum: ['free', 'aa', 'prepay'],
+    default: 'free'
+  },
   
   // 组织者
   organizer: {
