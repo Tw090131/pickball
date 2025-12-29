@@ -137,9 +137,14 @@
   </view>
 
   <!-- 空状态 -->
-  <view class="empty-state" wx:if="{{!loading && !error && filteredEvents.length === 0}}">
+  <view class="empty-state" wx:if="{{!loading && !error && filteredEvents.length === 0 && events.length === 0}}">
     <view class="empty-state-icon">🏸</view>
     <view class="empty-state-text">暂无赛事</view>
+  </view>
+  
+  <!-- 调试信息（开发时可见） -->
+  <view class="debug-info" wx:if="{{events.length > 0 && filteredEvents.length === 0}}" style="padding: 20rpx; background: #fff3cd; margin: 20rpx; border-radius: 8rpx;">
+    <text style="font-size: 24rpx; color: #856404;">调试：有 {{events.length}} 个活动，但筛选后为 0。当前分类：{{currentCategory}}</text>
   </view>
 </view>
 

@@ -24,7 +24,8 @@ router.get('/', optionalAuth, async (req, res, next) => {
 
     // 构建查询条件
     const query = {};
-    if (category && category !== 'all') {
+    // 只有当 category 存在、不是 'all'、不是 'undefined' 字符串时才添加
+    if (category && category !== 'all' && category !== 'undefined') {
       query.category = category;
     }
     if (status) {
@@ -38,9 +39,20 @@ router.get('/', optionalAuth, async (req, res, next) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // 查询
+    // 注意：如果 sortBy 是 'distance'，需要在计算距离后再排序
+    let sortOption = {};
+    if (sortBy === 'startTime') {
+      sortOption = { startTime: 1 }; // 按开始时间升序
+    } else if (sortBy === 'distance') {
+      // 距离排序在计算距离后处理
+      sortOption = { createdAt: -1 }; // 临时按创建时间降序
+    } else {
+      sortOption = { createdAt: -1 }; // 默认按创建时间降序
+    }
+    
     let events = await Event.find(query)
       .populate('organizer', 'nickName avatarUrl')
-      .sort({ [sortBy]: sortBy === 'startTime' ? 1 : -1 })
+      .sort(sortOption)
       .skip(skip)
       .limit(parseInt(limit));
 
@@ -71,7 +83,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
 
     // 格式化数据
     const formattedEvents = events.map(event => ({
-      id: event._id,
+      id: event._id ? event._id.toString() : event._id,
       title: event.title,
       category: event.category,
       startTime: event.startTime,
@@ -97,6 +109,18 @@ router.get('/', optionalAuth, async (req, res, next) => {
     }));
 
     const total = await Event.countDocuments(query);
+
+    console.log('查询条件:', JSON.stringify(query));
+    console.log('查询到的活动数量:', events.length);
+    console.log('格式化后的活动数量:', formattedEvents.length);
+    console.log('活动示例:', formattedEvents.length > 0 ? {
+      id: formattedEvents[0].id,
+      idType: typeof formattedEvents[0].id,
+      title: formattedEvents[0].title,
+      category: formattedEvents[0].category,
+      status: formattedEvents[0].status
+    } : '无数据');
+    console.log('所有活动的 ID:', formattedEvents.map(e => ({ id: e.id, idType: typeof e.id, title: e.title })));
 
     res.json({
       success: true,
@@ -171,14 +195,38 @@ router.post('/', authenticate, [
       });
     }
 
+    // 确保 category 字段存在
+    if (!req.body.category) {
+      return res.status(400).json({
+        success: false,
+        message: '分类不能为空'
+      });
+    }
+
+    // 验证 category 值
+    const validCategories = ['competition', 'activity', 'club'];
+    if (!validCategories.includes(req.body.category)) {
+      return res.status(400).json({
+        success: false,
+        message: '分类无效，必须是 competition、activity 或 club'
+      });
+    }
+
     const eventData = {
       ...req.body,
+      category: req.body.category, // 明确设置 category
       organizer: req.userId,
       organizerName: req.user.nickName,
       organizerAvatar: req.user.avatarUrl,
       currentParticipants: 0,
       status: 'registering'
     };
+
+    console.log('创建事件数据:', {
+      title: eventData.title,
+      category: eventData.category,
+      hasCategory: !!eventData.category
+    });
 
     // 处理八人转特殊配置
     if (req.body.rotationConfig) {
@@ -199,8 +247,39 @@ router.post('/', authenticate, [
       }
     }
 
+    // 确保 category 字段存在且有效
+    if (!eventData.category || !['competition', 'activity', 'club'].includes(eventData.category)) {
+      console.error('警告：category 字段无效或缺失', eventData);
+      // 如果 category 无效，设置默认值
+      eventData.category = eventData.category || 'activity';
+    }
+
+    console.log('创建事件数据:', {
+      title: eventData.title,
+      category: eventData.category,
+      hasCategory: !!eventData.category
+    });
+
     const event = new Event(eventData);
+    
+    // 验证 category 是否被正确设置
+    if (!event.category) {
+      console.error('错误：category 字段未设置', eventData);
+      event.category = 'activity'; // 设置默认值
+    }
+    
+    console.log('保存前的事件数据:', {
+      title: event.title,
+      category: event.category
+    });
+    
     await event.save();
+    
+    console.log('保存后的事件数据:', {
+      id: event._id,
+      title: event.title,
+      category: event.category
+    });
 
     res.status(201).json({
       success: true,

@@ -44,11 +44,15 @@ Page({
       // 从服务器获取数据
       const location = app.globalData.location;
       const params = {
-        category: this.data.currentCategory !== 'all' ? this.data.currentCategory : undefined,
         sortBy: this.data.sortBy === 'distance' ? 'distance' : 'startTime',
         page: 1,
         limit: 50
       };
+      
+      // 只有当分类不是 'all' 时才添加 category 参数
+      if (this.data.currentCategory && this.data.currentCategory !== 'all') {
+        params.category = this.data.currentCategory;
+      }
 
       // 如果有位置信息，传递位置参数用于计算距离
       if (location) {
@@ -56,10 +60,52 @@ Page({
         params.longitude = location.longitude;
       }
 
+      console.log('准备获取活动列表，参数:', params);
       const res = await getEventList(params);
+      console.log('=== 获取活动列表响应 ===');
+      console.log('响应类型:', typeof res);
+      console.log('响应是否为对象:', res instanceof Object);
+      console.log('响应完整内容:', res);
+      console.log('响应 JSON:', JSON.stringify(res, null, 2));
+      console.log('响应数据结构:', {
+        success: res?.success,
+        hasData: !!res?.data,
+        hasEvents: !!res?.data?.events,
+        eventsLength: res?.data?.events?.length || 0,
+        firstEvent: res?.data?.events?.[0] ? {
+          id: res.data.events[0].id,
+          title: res.data.events[0].title,
+          category: res.data.events[0].category
+        } : null
+      });
+      console.log('=== 响应分析结束 ===');
       
-      if (res.success && res.data && res.data.events) {
-        const serverEvents = res.data.events;
+      // 检查响应结构
+      if (!res) {
+        console.error('响应为空！');
+        throw new Error('响应为空');
+      }
+      
+      if (!res.success) {
+        console.error('响应 success 为 false:', res);
+        throw new Error(res?.message || '获取数据失败');
+      }
+      
+      if (!res.data) {
+        console.error('响应中没有 data 字段:', res);
+        throw new Error('响应数据格式错误：缺少 data 字段');
+      }
+      
+      if (!res.data.events) {
+        console.error('响应中没有 events 字段:', res.data);
+        throw new Error('响应数据格式错误：缺少 events 字段');
+      }
+      
+      const serverEvents = res.data.events;
+      console.log('获取到活动数量:', serverEvents.length);
+      console.log('活动列表:', serverEvents.map(e => ({ id: e.id, title: e.title, category: e.category })));
+      
+      if (res && res.success && res.data && res.data.events) {
       
         // 处理服务器返回的数据
         const events = serverEvents.map(event => {
@@ -120,6 +166,7 @@ Page({
               title: event.title,
               category: event.category,
               startTime: formatDateTime(event.startTime),
+              startTimeISO: event.startTime, // 保存原始 ISO 时间用于排序
               endTime: event.endTime,
               registrationDeadline: event.registrationDeadline,
               location: event.location,
@@ -170,15 +217,21 @@ Page({
           }
         });
 
+        console.log('处理后的活动数量:', events.length);
+        console.log('处理后的活动示例:', events.length > 0 ? events[0] : '无数据');
+        
         this.setData({
           events,
           loading: false
         }, () => {
           this.filterAndSort();
+          console.log('筛选后的活动数量:', this.data.filteredEvents.length);
+          console.log('当前分类:', this.data.currentCategory);
           if (callback) callback();
         });
       } else {
-        throw new Error(res.message || '获取数据失败');
+        console.error('获取数据失败，响应:', res);
+        throw new Error(res?.message || '获取数据失败');
       }
     } catch (err) {
       console.error('加载赛事列表失败', err);
@@ -434,15 +487,38 @@ Page({
   // 筛选和排序
   filterAndSort() {
     let filtered = [...this.data.events];
+    console.log('开始筛选，原始数据:', filtered.length, '当前分类:', this.data.currentCategory);
 
     // 按分类筛选
     if (this.data.currentCategory !== 'all') {
-      filtered = filtered.filter(event => event.category === this.data.currentCategory);
+      filtered = filtered.filter(event => {
+        const match = event.category === this.data.currentCategory;
+        if (!match) {
+          console.log('活动被过滤:', event.title, '分类:', event.category, '期望:', this.data.currentCategory);
+        }
+        return match;
+      });
+      console.log('分类筛选后:', filtered.length);
     }
 
     // 排序
     if (this.data.sortBy === 'time') {
-      filtered.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+      // 使用 startTimeISO 或解析格式化后的时间字符串
+      filtered.sort((a, b) => {
+        try {
+          // 优先使用 ISO 格式时间
+          if (a.startTimeISO && b.startTimeISO) {
+            return new Date(a.startTimeISO) - new Date(b.startTimeISO);
+          }
+          // 否则尝试解析格式化后的时间字符串
+          const timeA = new Date(a.startTime.replace(/[年月日()]/g, '').replace(/\s+/g, ' '));
+          const timeB = new Date(b.startTime.replace(/[年月日()]/g, '').replace(/\s+/g, ' '));
+          return timeA - timeB;
+        } catch (err) {
+          console.error('时间排序失败', err, a.startTime, b.startTime);
+          return 0;
+        }
+      });
     } else if (this.data.sortBy === 'distance') {
       filtered.sort((a, b) => {
         const distA = a.distance ? parseFloat(a.distance) : 9999;
@@ -451,6 +527,7 @@ Page({
       });
     }
 
+    console.log('最终筛选结果:', filtered.length);
     this.setData({
       filteredEvents: filtered
     });
