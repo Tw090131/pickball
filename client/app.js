@@ -1,37 +1,133 @@
 // app.js
+const { wechatLogin, getCurrentUser } = require('./utils/api');
+
 App({
   onLaunch() {
-    // 获取用户信息
-    this.getUserInfo();
+    // 检查登录状态
+    this.checkLogin();
     // 获取位置信息
     this.getLocation();
   },
 
-  // 获取用户信息
-  getUserInfo() {
-    const that = this;
+  // 检查登录状态
+  async checkLogin() {
     try {
-      wx.getSetting({
-        success: res => {
-          if (res.authSetting['scope.userInfo']) {
-            wx.getUserInfo({
-              success: res => {
-                that.globalData.userInfo = res.userInfo;
-              },
-              fail: err => {
-                // 静默失败，不影响应用启动
-                console.warn('获取用户信息失败', err);
-              }
+      const token = wx.getStorageSync('token');
+      if (token) {
+        // 验证token是否有效
+        try {
+          const res = await getCurrentUser();
+          if (res.success && res.data.user) {
+            const user = res.data.user;
+            // 确保用户信息完整
+            const fullUserInfo = {
+              id: user.id || user._id,
+              nickName: user.nickName || '用户',
+              avatarUrl: user.avatarUrl || '',
+              phoneNumber: user.phoneNumber || '',
+              gender: user.gender || 0,
+              level: user.level || 1,
+              totalMatches: user.totalMatches || 0,
+              totalWins: user.totalWins || 0
+            };
+            this.globalData.userInfo = fullUserInfo;
+            this.globalData.isLoggedIn = true;
+            this.globalData.token = token;
+          } else {
+            // token无效，清除
+            this.clearLogin();
+          }
+        } catch (err) {
+          console.warn('验证登录状态失败', err);
+          this.clearLogin();
+        }
+      } else {
+        this.globalData.isLoggedIn = false;
+        this.globalData.userInfo = null;
+      }
+    } catch (err) {
+      console.error('检查登录状态异常', err);
+      this.globalData.isLoggedIn = false;
+      this.globalData.userInfo = null;
+    }
+  },
+
+  // 微信登录
+  async doLogin(userInfo) {
+    try {
+      wx.showLoading({ title: '登录中...' });
+      
+      // 获取微信登录code
+      const loginRes = await new Promise((resolve, reject) => {
+        wx.login({
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      if (!loginRes.code) {
+        throw new Error('获取登录凭证失败');
+      }
+
+      // 调用后端登录接口
+      const res = await wechatLogin(loginRes.code, userInfo);
+      
+      if (res.success) {
+        // 保存token和用户信息
+        wx.setStorageSync('token', res.data.token);
+        this.globalData.token = res.data.token;
+        this.globalData.userInfo = res.data.user;
+        this.globalData.isLoggedIn = true;
+        
+        wx.hideLoading();
+        return {
+          success: true,
+          user: res.data.user
+        };
+      } else {
+        throw new Error(res.message || '登录失败');
+      }
+    } catch (err) {
+      console.error('登录失败', err);
+      wx.hideLoading();
+      wx.showToast({
+        title: err.message || '登录失败，请重试',
+        icon: 'none'
+      });
+      return {
+        success: false,
+        message: err.message
+      };
+    }
+  },
+
+  // 清除登录状态
+  clearLogin() {
+    wx.removeStorageSync('token');
+    this.globalData.token = null;
+    this.globalData.userInfo = null;
+    this.globalData.isLoggedIn = false;
+  },
+
+  // 检查是否需要登录
+  checkAuth() {
+    if (!this.globalData.isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '此功能需要登录后使用',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            wx.switchTab({
+              url: '/pages/profile/profile'
             });
           }
-        },
-        fail: err => {
-          console.warn('获取设置失败', err);
         }
       });
-    } catch (err) {
-      console.error('getUserInfo 异常', err);
+      return false;
     }
+    return true;
   },
 
   // 获取位置信息
@@ -127,7 +223,9 @@ App({
   globalData: {
     userInfo: null,
     location: null,
-    events: [] // 临时存储，实际应该从服务器获取
+    events: [], // 临时存储，实际应该从服务器获取
+    token: null,
+    isLoggedIn: false
   }
 });
 

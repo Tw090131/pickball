@@ -2,21 +2,144 @@
 <view class="container">
   <!-- 用户信息 -->
   <view class="user-section card">
-    <view class="user-header" wx:if="{{userInfo}}">
-      <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+    <!-- 已登录状态 -->
+    <view class="user-header" wx:if="{{isLoggedIn && userInfo}}">
+      <image 
+        class="avatar" 
+        src="{{userInfo.avatarUrl || '/images/userDefault.png'}}" 
+        mode="aspectFill"
+        binderror="onAvatarError"
+      ></image>
       <view class="user-details">
-        <text class="nickname">{{userInfo.nickName}}</text>
-        <text class="phone" wx:if="{{phoneNumber}}">{{phoneNumber}}</text>
+        <text class="nickname">{{userInfo.nickName || '用户'}}</text>
+        <text class="phone" wx:if="{{hasPhone}}">{{phoneNumber}}</text>
+        <text class="phone-placeholder" wx:else>未绑定手机号</text>
       </view>
     </view>
-    <button 
-      class="btn-primary login-btn"
-      wx:if="{{!userInfo}}"
-      open-type="getUserProfile"
-      bindgetuserprofile="getUserProfile"
-    >
-      授权登录
-    </button>
+    
+    <!-- 未登录状态 -->
+    <view class="login-prompt" wx:if="{{!isLoggedIn}}">
+      <text class="prompt-text">登录后可使用更多功能</text>
+      <button 
+        class="btn-primary login-btn"
+        open-type="getUserProfile"
+        bindgetuserprofile="getUserProfile"
+      >
+        微信授权登录
+      </button>
+    </view>
+
+    <!-- 已登录操作 -->
+    <view class="user-actions" wx:if="{{isLoggedIn && userInfo}}">
+      <!-- 绑定手机号 -->
+      <button 
+        class="btn-phone"
+        wx:if="{{!hasPhone}}"
+        open-type="getPhoneNumber"
+        bindgetphonenumber="getPhoneNumber"
+      >
+        📱 绑定手机号
+      </button>
+      <!-- 退出登录 -->
+      <button 
+        class="btn-logout"
+        bindtap="logout"
+      >
+        退出登录
+      </button>
+    </view>
+  </view>
+
+  <!-- 个人战绩 -->
+  <view class="record-section card" wx:if="{{isLoggedIn && userInfo}}">
+    <view class="section-title">个人战绩</view>
+    
+    <!-- 主要统计 -->
+    <view class="record-stats">
+      <view class="stat-item">
+        <view class="stat-value">{{record.totalMatches}}</view>
+        <view class="stat-label">总场次</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value stat-win">{{record.totalWins}}</view>
+        <view class="stat-label">胜场</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value stat-loss">{{record.totalLosses}}</view>
+        <view class="stat-label">负场</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value stat-rate">{{record.winRate}}%</view>
+        <view class="stat-label">胜率</view>
+      </view>
+    </view>
+
+    <!-- 详细数据 -->
+    <view class="record-details" wx:if="{{record.totalMatches > 0}}">
+      <!-- 八人转数据 -->
+      <view class="detail-group" wx:if="{{record.totalPoints > 0}}">
+        <view class="detail-title">八人转数据</view>
+        <view class="detail-row">
+          <text class="detail-label">总积分：</text>
+          <text class="detail-value">{{record.totalPoints}}分</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">净胜局：</text>
+          <text class="detail-value {{record.netGames >= 0 ? 'positive' : 'negative'}}">
+            {{record.netGames >= 0 ? '+' : ''}}{{record.netGames}}
+          </text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">局比分：</text>
+          <text class="detail-value">{{record.totalGamesWon}}:{{record.totalGamesLost}}</text>
+        </view>
+      </view>
+
+      <!-- 传统计分数据 -->
+      <view class="detail-group" wx:if="{{record.totalScore > 0 && record.totalPoints == 0}}">
+        <view class="detail-title">传统计分数据</view>
+        <view class="detail-row">
+          <text class="detail-label">总得分：</text>
+          <text class="detail-value">{{record.totalScore}}分</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">总失分：</text>
+          <text class="detail-value">{{record.totalAgainstScore}}分</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">净胜分：</text>
+          <text class="detail-value {{record.netScore >= 0 ? 'positive' : 'negative'}}">
+            {{record.netScore >= 0 ? '+' : ''}}{{record.netScore}}
+          </text>
+        </view>
+      </view>
+
+      <!-- 最近战绩 -->
+      <view class="detail-group" wx:if="{{record.recentMatches && record.recentMatches.length > 0}}">
+        <view class="detail-title">最近战绩</view>
+        <view class="recent-matches">
+          <view 
+            class="recent-match-item"
+            wx:for="{{record.recentMatches}}"
+            wx:key="id"
+          >
+            <view class="match-result">
+              <text class="result-badge {{item.isWinner ? 'win' : 'loss'}}">
+                {{item.result}}
+              </text>
+              <text class="match-event">{{item.eventTitle}}</text>
+            </view>
+            <text class="match-date">{{item.date}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 无战绩提示 -->
+    <view class="no-record" wx:else>
+      <text class="no-record-text">暂无战绩数据</text>
+      <text class="no-record-hint">参与比赛后即可查看战绩</text>
+    </view>
   </view>
 
   <!-- 我的活动 -->

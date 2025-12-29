@@ -166,7 +166,21 @@ const request = (options) => {
             resolve(res.data);
           }
         } else if (res.statusCode === 401) {
-          // 未授权，可以跳转到登录页
+          // 未授权，清除token并跳转到登录页
+          const app = getApp();
+          app.clearLogin();
+          
+          wx.showModal({
+            title: '登录已过期',
+            content: '请重新登录',
+            showCancel: false,
+            success: () => {
+              wx.switchTab({
+                url: '/pages/profile/profile'
+              });
+            }
+          });
+          
           reject({
             code: 401,
             message: '未授权，请重新登录',

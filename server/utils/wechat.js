@@ -1,5 +1,6 @@
 // server/utils/wechat.js
 const axios = require('axios');
+const crypto = require('crypto');
 
 /**
  * 微信登录 - 通过 code 获取 openid
@@ -32,16 +33,36 @@ async function getWechatOpenId(code) {
 
 /**
  * 解密手机号
+ * @param {String} encryptedData - 加密数据
+ * @param {String} iv - 初始向量
+ * @param {String} sessionKey - 会话密钥
+ * @returns {Object} 解密后的手机号信息
  */
 function decryptPhoneNumber(encryptedData, iv, sessionKey) {
-  // 这里需要使用微信提供的解密算法
-  // 实际实现需要使用 crypto 模块
-  // 简化版本，实际应该使用正确的解密方法
-  return {
-    phoneNumber: '',
-    purePhoneNumber: '',
-    countryCode: '86'
-  };
+  try {
+    // Base64 解码
+    const encryptedBuffer = Buffer.from(encryptedData, 'base64');
+    const ivBuffer = Buffer.from(iv, 'base64');
+    const sessionKeyBuffer = Buffer.from(sessionKey, 'base64');
+
+    // AES-128-CBC 解密
+    const decipher = crypto.createDecipheriv('aes-128-cbc', sessionKeyBuffer, ivBuffer);
+    decipher.setAutoPadding(true);
+    
+    let decrypted = decipher.update(encryptedBuffer, 'binary', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    const phoneData = JSON.parse(decrypted);
+    
+    return {
+      phoneNumber: phoneData.phoneNumber || '',
+      purePhoneNumber: phoneData.purePhoneNumber || phoneData.phoneNumber || '',
+      countryCode: phoneData.countryCode || '86'
+    };
+  } catch (error) {
+    console.error('解密手机号失败:', error);
+    throw new Error('解密手机号失败');
+  }
 }
 
 /**

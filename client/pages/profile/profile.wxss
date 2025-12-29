@@ -34,9 +34,53 @@
   color: #999;
 }
 
+.phone-placeholder {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.login-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30rpx;
+  padding: 40rpx 0;
+}
+
+.prompt-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
 .login-btn {
   width: 100%;
   margin-top: 20rpx;
+}
+
+.user-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.btn-phone {
+  flex: 1;
+  padding: 20rpx;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  border: none;
+}
+
+.btn-logout {
+  flex: 1;
+  padding: 20rpx;
+  background-color: #f5f5f5;
+  color: #666;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  border: none;
 }
 
 .menu-section {
@@ -77,5 +121,168 @@
 .menu-arrow {
   font-size: 28rpx;
   color: #999;
+}
+
+/* 战绩区域 */
+.record-section {
+  margin-bottom: 20rpx;
+}
+
+.record-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 30rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.stat-value {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.stat-value.stat-win {
+  color: #4CAF50;
+}
+
+.stat-value.stat-loss {
+  color: #F44336;
+}
+
+.stat-value.stat-rate {
+  color: #FF9800;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.record-details {
+  padding-top: 20rpx;
+}
+
+.detail-group {
+  margin-bottom: 30rpx;
+}
+
+.detail-group:last-child {
+  margin-bottom: 0;
+}
+
+.detail-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15rpx;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.detail-value {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.detail-value.positive {
+  color: #4CAF50;
+}
+
+.detail-value.negative {
+  color: #F44336;
+}
+
+.recent-matches {
+  margin-top: 10rpx;
+}
+
+.recent-match-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.recent-match-item:last-child {
+  border-bottom: none;
+}
+
+.match-result {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+  flex: 1;
+}
+
+.result-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
+  font-size: 22rpx;
+  font-weight: bold;
+  color: white;
+}
+
+.result-badge.win {
+  background-color: #4CAF50;
+}
+
+.result-badge.loss {
+  background-color: #999;
+}
+
+.match-event {
+  font-size: 26rpx;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-date {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.no-record {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0;
+  gap: 15rpx;
+}
+
+.no-record-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.no-record-hint {
+  font-size: 24rpx;
+  color: #ccc;
 }
 

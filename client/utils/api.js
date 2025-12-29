@@ -123,11 +123,11 @@ const getCurrentUser = () => {
 /**
  * 绑定手机号
  */
-const bindPhone = (encryptedData, iv) => {
+const bindPhone = (encryptedData, iv, code) => {
   return request({
     url: `${baseURL}/auth/bind-phone`,
     method: 'POST',
-    data: { encryptedData, iv }
+    data: { encryptedData, iv, code }
   })
 }
 
@@ -194,6 +194,16 @@ const getUserStats = (userId) => {
   })
 }
 
+/**
+ * 获取用户战绩
+ */
+const getUserRecord = (userId) => {
+  return request({
+    url: `${baseURL}/users/${userId}/record`,
+    method: 'GET'
+  })
+}
+
 module.exports = {
   getEventList,
   getEventDetail,
@@ -211,6 +221,7 @@ module.exports = {
   createPayment,
   requestRefund,
   getUserInfo,
-  getUserStats
+  getUserStats,
+  getUserRecord
 }
 

@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { getWechatOpenId } = require('../utils/wechat');
+const { getWechatOpenId, decryptPhoneNumber } = require('../utils/wechat');
 const { authenticate } = require('../middleware/auth');
 
 /**
@@ -47,6 +47,9 @@ router.post('/login', async (req, res, next) => {
       }
     }
 
+    // 注意：实际应用中，session_key 应该存储在 Redis 中，key 为 openid
+    // 这里简化处理，不存储 session_key（因为每次登录都会获取新的）
+
     // 生成 JWT token
     const token = jwt.sign(
       { userId: user._id, openid: user.openid },
@@ -79,12 +82,51 @@ router.post('/bind-phone', authenticate, async (req, res, next) => {
   try {
     const { encryptedData, iv } = req.body;
 
-    // 这里需要解密手机号
-    // 实际实现需要使用微信提供的解密方法
-    // const phoneData = decryptPhoneNumber(encryptedData, iv, sessionKey);
+    if (!encryptedData || !iv) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少必要参数'
+      });
+    }
 
+    // 获取用户的 session_key（需要从登录时保存）
+    // 注意：实际应用中，session_key 应该存储在 Redis 或数据库中
+    // 这里简化处理，需要从用户登录时保存的 session_key 获取
     const user = await User.findById(req.userId);
-    // user.phoneNumber = phoneData.phoneNumber;
+    
+    if (!user.openid) {
+      return res.status(400).json({
+        success: false,
+        message: '用户未绑定微信'
+      });
+    }
+
+    // 重新获取 session_key（实际应该从缓存中获取）
+    // 这里需要前端传递 code 来获取新的 session_key
+    // 或者从登录时保存的 session_key 中获取
+    // 简化版本：需要前端在绑定手机号时重新调用 wx.login 获取 code
+    // 然后后端通过 code 获取 session_key
+    
+    // 临时方案：如果前端传递了 code，使用 code 获取 session_key
+    const { code } = req.body;
+    let sessionKey;
+    
+    if (code) {
+      const wechatData = await getWechatOpenId(code);
+      sessionKey = wechatData.session_key;
+    } else {
+      // 实际应该从缓存中获取，这里返回错误提示前端传递 code
+      return res.status(400).json({
+        success: false,
+        message: '需要重新获取授权，请重试'
+      });
+    }
+
+    // 解密手机号
+    const phoneData = decryptPhoneNumber(encryptedData, iv, sessionKey);
+    
+    // 更新用户手机号
+    user.phoneNumber = phoneData.purePhoneNumber || phoneData.phoneNumber;
     await user.save();
 
     res.json({
@@ -95,6 +137,7 @@ router.post('/bind-phone', authenticate, async (req, res, next) => {
       }
     });
   } catch (error) {
+    console.error('绑定手机号失败:', error);
     next(error);
   }
 });
