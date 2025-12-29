@@ -14,6 +14,12 @@ router.post('/login', async (req, res, next) => {
   try {
     const { code, userInfo } = req.body;
 
+    console.log('收到登录请求:', {
+      hasCode: !!code,
+      codeLength: code ? code.length : 0,
+      hasUserInfo: !!userInfo
+    });
+
     if (!code) {
       return res.status(400).json({
         success: false,
@@ -21,8 +27,26 @@ router.post('/login', async (req, res, next) => {
       });
     }
 
+    // 验证 code 格式
+    if (typeof code !== 'string' || code.length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: '无效的 code 格式'
+      });
+    }
+
     // 获取微信 openid
-    const wechatData = await getWechatOpenId(code);
+    let wechatData;
+    try {
+      wechatData = await getWechatOpenId(code);
+    } catch (error) {
+      console.error('获取 openid 失败:', error.message);
+      return res.status(400).json({
+        success: false,
+        message: error.message || '微信登录失败，请重试'
+      });
+    }
+
     const { openid, unionid } = wechatData;
 
     // 查找或创建用户

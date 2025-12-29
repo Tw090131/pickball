@@ -116,7 +116,8 @@ const eventSchema = new mongoose.Schema({
     specialMode: {
       type: String,
       enum: ['standard', 'full', 'super'],
-      default: null
+      default: undefined,
+      required: false
     },
     // 是否启用让分
     enableHandicap: {
@@ -126,7 +127,8 @@ const eventSchema = new mongoose.Schema({
     // 让分规则
     handicapRules: {
       type: mongoose.Schema.Types.Mixed,
-      default: null
+      default: undefined,
+      required: false
     }
   },
   

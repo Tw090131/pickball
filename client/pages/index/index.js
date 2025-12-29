@@ -1,5 +1,6 @@
 // pages/index/index.js
 const app = getApp();
+const { getEventList } = require('../../utils/api');
 
 Page({
   data: {
@@ -27,7 +28,7 @@ Page({
   },
 
   // 加载赛事列表
-  loadEvents(callback) {
+  async loadEvents(callback) {
     // 防止重复加载
     if (this.data.loading) {
       if (callback) callback();
@@ -40,91 +41,155 @@ Page({
     });
 
     try {
-      // 模拟数据，实际应该从服务器获取
-      const mockEvents = this.getMockEvents();
+      // 从服务器获取数据
+      const location = app.globalData.location;
+      const params = {
+        category: this.data.currentCategory !== 'all' ? this.data.currentCategory : undefined,
+        sortBy: this.data.sortBy === 'distance' ? 'distance' : 'startTime',
+        page: 1,
+        limit: 50
+      };
+
+      // 如果有位置信息，传递位置参数用于计算距离
+      if (location) {
+        params.latitude = location.latitude;
+        params.longitude = location.longitude;
+      }
+
+      const res = await getEventList(params);
       
-      // 计算距离并添加状态
-      const events = mockEvents.map(event => {
-        try {
-          const distance = app.globalData.location 
-            ? app.calculateDistance(
-                app.globalData.location.latitude,
-                app.globalData.location.longitude,
-                event.latitude,
-                event.longitude
-              )
-            : null;
-          
-          // 优先使用新格式的 status，否则使用旧格式计算
-          let status = event.statusLabel || event.status;
-          if (!status) {
-            status = app.getEventStatus(event);
+      if (res.success && res.data && res.data.events) {
+        const serverEvents = res.data.events;
+      
+        // 处理服务器返回的数据
+        const events = serverEvents.map(event => {
+          try {
+            // 使用服务器返回的距离（如果已计算）或本地计算
+            const distance = event.distance !== undefined 
+              ? event.distance 
+              : (app.globalData.location 
+                  ? app.calculateDistance(
+                      app.globalData.location.latitude,
+                      app.globalData.location.longitude,
+                      event.latitude,
+                      event.longitude
+                    )
+                  : null);
+            
+            // 处理状态
+            let status = '报名中';
+            let statusClass = 'tag-primary';
+            
+            if (event.status === 'registering') {
+              status = '报名中';
+              statusClass = 'tag-primary';
+            } else if (event.status === 'in_progress') {
+              status = '比赛中';
+              statusClass = 'tag-warning';
+            } else if (event.status === 'ended') {
+              status = '已结束';
+              statusClass = 'tag-danger';
+            } else if (event.status === 'cancelled') {
+              status = '已取消';
+              statusClass = 'tag-default';
+            }
+
+            // 处理格式信息
+            const formatText = event.format?.type || '未知';
+            const scoringSystem = event.scoringSystem || 11;
+            const currentParticipants = event.currentParticipants || 0;
+            const maxParticipants = event.maxParticipants || 0;
+            const isFull = currentParticipants >= maxParticipants;
+
+            // 格式化时间
+            const formatDateTime = (dateStr) => {
+              if (!dateStr) return '';
+              const date = new Date(dateStr);
+              const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+              const year = date.getFullYear();
+              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+              const day = date.getDate().toString().padStart(2, '0');
+              const hour = date.getHours().toString().padStart(2, '0');
+              const minute = date.getMinutes().toString().padStart(2, '0');
+              const weekday = weekdays[date.getDay()];
+              return `${year}/${month}/${day} ( ${weekday} ) ${hour}:${minute}`;
+            };
+
+            return {
+              id: event.id || event._id,
+              title: event.title,
+              category: event.category,
+              startTime: formatDateTime(event.startTime),
+              endTime: event.endTime,
+              registrationDeadline: event.registrationDeadline,
+              location: event.location,
+              latitude: event.latitude,
+              longitude: event.longitude,
+              distance: distance ? parseFloat(distance).toFixed(1) : null,
+              status,
+              statusClass,
+              categoryText: this.getCategoryText(event.category),
+              formatText,
+              scoringSystem,
+              currentParticipants,
+              maxParticipants,
+              isFull,
+              organizerName: event.organizer?.name || event.organizerName || '未知组织',
+              organizerAvatar: event.organizer?.avatar || event.organizerAvatar || '',
+              rotationRule: event.rotationRule || '未知',
+              registrationFee: event.registrationFee || 0,
+              views: event.views || 0,
+              // 兼容字段
+              registration: {
+                current: currentParticipants,
+                total: maxParticipants,
+                isFull: isFull
+              },
+              stats: {
+                views: event.views || 0
+              }
+            };
+          } catch (err) {
+            console.error('处理事件数据失败', err, event);
+            return {
+              id: event.id || event._id,
+              title: event.title || '未知赛事',
+              category: event.category || 'activity',
+              distance: null,
+              status: '未知',
+              statusClass: 'tag-default',
+              categoryText: this.getCategoryText(event.category || 'activity'),
+              formatText: event.format?.type || '未知',
+              scoringSystem: event.scoringSystem || 11,
+              currentParticipants: event.currentParticipants || 0,
+              maxParticipants: event.maxParticipants || 0,
+              organizerName: event.organizer?.name || event.organizerName || '未知组织',
+              rotationRule: event.rotationRule || '未知',
+              registrationFee: event.registrationFee || 0
+            };
           }
-          
-          let statusClass = 'tag-default';
-          if (status === '报名中' || event.status === 'registering') {
-            statusClass = 'tag-primary';
-            status = '报名中';
-          } else if (status === '比赛中' || event.status === 'in_progress') {
-            statusClass = 'tag-warning';
-            status = '比赛中';
-          } else if (status === '已结束' || event.status === 'ended') {
-            statusClass = 'tag-danger';
-            status = '已结束';
-          }
+        });
 
-          // 兼容新旧格式
-          const formatText = event.format?.type || event.format || '未知';
-          const scoringSystem = event.format?.scoreSystem?.replace('分制', '') || event.scoringSystem || 11;
-          const currentParticipants = event.registration?.current || event.currentParticipants || 0;
-          const maxParticipants = event.registration?.total || event.maxParticipants || 0;
-
-          return {
-            ...event,
-            distance: distance ? distance.toFixed(1) : null,
-            status,
-            statusClass,
-            categoryText: this.getCategoryText(event.category),
-            // 统一字段格式
-            formatText,
-            scoringSystem,
-            currentParticipants,
-            maxParticipants,
-            organizerName: event.organizer?.name || event.organizer || '未知组织'
-          };
-        } catch (err) {
-          console.error('处理事件数据失败', err, event);
-          return {
-            ...event,
-            distance: null,
-            status: '未知',
-            statusClass: 'tag-default',
-            categoryText: this.getCategoryText(event.category),
-            formatText: event.format?.type || event.format || '未知',
-            scoringSystem: event.format?.scoreSystem?.replace('分制', '') || event.scoringSystem || 11,
-            currentParticipants: event.registration?.current || event.currentParticipants || 0,
-            maxParticipants: event.registration?.total || event.maxParticipants || 0,
-            organizerName: event.organizer?.name || event.organizer || '未知组织'
-          };
-        }
-      });
-
-      this.setData({
-        events,
-        loading: false
-      }, () => {
-        this.filterAndSort();
-        if (callback) callback();
-      });
+        this.setData({
+          events,
+          loading: false
+        }, () => {
+          this.filterAndSort();
+          if (callback) callback();
+        });
+      } else {
+        throw new Error(res.message || '获取数据失败');
+      }
     } catch (err) {
       console.error('加载赛事列表失败', err);
       this.setData({
         loading: false,
-        error: '加载失败，请稍后重试'
+        error: err.message || '加载失败，请稍后重试'
       });
       wx.showToast({
-        title: '加载失败',
-        icon: 'none'
+        title: err.message || '加载失败',
+        icon: 'none',
+        duration: 2000
       });
       if (callback) callback();
     }

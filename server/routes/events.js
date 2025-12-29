@@ -178,7 +178,21 @@ router.post('/', authenticate, [
 
     // 处理八人转特殊配置
     if (req.body.rotationConfig) {
-      eventData.rotationConfig = req.body.rotationConfig;
+      eventData.rotationConfig = {
+        ...req.body.rotationConfig
+      };
+      
+      // 如果 specialMode 是 null 或空字符串，则删除该字段
+      if (eventData.rotationConfig.specialMode === null || 
+          eventData.rotationConfig.specialMode === '' ||
+          eventData.rotationConfig.specialMode === undefined) {
+        delete eventData.rotationConfig.specialMode;
+      }
+      
+      // 如果 handicapRules 是 null，则删除该字段
+      if (eventData.rotationConfig.handicapRules === null) {
+        delete eventData.rotationConfig.handicapRules;
+      }
     }
 
     const event = new Event(eventData);
@@ -219,7 +233,29 @@ router.put('/:id', authenticate, async (req, res, next) => {
       });
     }
 
-    Object.assign(event, req.body);
+    // 处理更新数据
+    const updateData = { ...req.body };
+    
+    // 处理八人转特殊配置
+    if (updateData.rotationConfig) {
+      // 如果 specialMode 是 null 或空字符串，则删除该字段
+      if (updateData.rotationConfig.specialMode === null || 
+          updateData.rotationConfig.specialMode === '' ||
+          updateData.rotationConfig.specialMode === undefined) {
+        delete updateData.rotationConfig.specialMode;
+        // 如果 rotationConfig 对象为空，则设置为 undefined
+        if (Object.keys(updateData.rotationConfig).length === 0) {
+          delete updateData.rotationConfig;
+        }
+      }
+      
+      // 如果 handicapRules 是 null，则删除该字段
+      if (updateData.rotationConfig.handicapRules === null) {
+        delete updateData.rotationConfig.handicapRules;
+      }
+    }
+
+    Object.assign(event, updateData);
     await event.save();
 
     res.json({
