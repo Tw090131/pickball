@@ -145,7 +145,41 @@
     <view class="form-section card">
       <view class="section-title">报名设置</view>
       
-      <view class="input-group">
+      <!-- 八人转：人数和场次选择 -->
+      <view class="input-group" wx:if="{{formData.rotationRule === '八人转'}}">
+        <text class="input-label">参与人数 *</text>
+        <picker 
+          mode="selector" 
+          range="{{playerCountOptions}}"
+          range-key="label"
+          value="{{playerCountIndex}}"
+          bindchange="onPlayerCountChange"
+        >
+          <view class="picker-view">
+            {{playerCountOptions[playerCountIndex].label}}
+          </view>
+        </picker>
+        <text class="input-hint">选择参与人数</text>
+      </view>
+
+      <view class="input-group" wx:if="{{formData.rotationRule === '八人转' && matchCountOptions.length > 0}}">
+        <text class="input-label">比赛场次 *</text>
+        <picker 
+          mode="selector" 
+          range="{{matchCountOptions}}"
+          range-key="label"
+          value="{{matchCountIndex}}"
+          bindchange="onMatchCountChange"
+        >
+          <view class="picker-view">
+            {{matchCountOptions[matchCountIndex].label}} - {{matchCountOptions[matchCountIndex].description}}
+          </view>
+        </picker>
+        <text class="input-hint">{{matchCountOptions[matchCountIndex].description}}</text>
+      </view>
+
+      <!-- 非八人转：普通人数输入 -->
+      <view class="input-group" wx:if="{{rotationType !== 'eight_rotation'}}">
         <text class="input-label">最大人数 *</text>
         <input 
           class="input-field" 
@@ -157,8 +191,8 @@
           min="{{minPlayers}}"
           max="{{maxPlayers}}"
         />
-        <text class="input-hint" wx:if="{{rotationType === 'eight_rotation'}}">
-          八人转支持 {{minPlayers}}-{{maxPlayers}} 人参与
+        <text class="input-hint">
+          支持 {{minPlayers}}-{{maxPlayers}} 人参与
         </text>
       </view>
 
@@ -203,37 +237,6 @@
             />
           </view>
           <text class="input-hint">允许半路加入或替补参与</text>
-        </view>
-
-        <!-- 6人和7人的特殊模式选择 -->
-        <view class="input-group" wx:if="{{formData.maxParticipants == 6}}">
-          <text class="input-label">6人转模式 *</text>
-          <picker 
-            mode="selector"
-            range="{{sixPlayerModes}}"
-            range-key="name"
-            value="{{sixPlayerModeIndex}}"
-            bindchange="onSixPlayerModeChange"
-          >
-            <view class="picker-view">
-              {{sixPlayerModes[sixPlayerModeIndex].name}} - {{sixPlayerModes[sixPlayerModeIndex].description}}
-            </view>
-          </picker>
-        </view>
-
-        <view class="input-group" wx:if="{{formData.maxParticipants == 7}}">
-          <text class="input-label">7人转模式 *</text>
-          <picker 
-            mode="selector"
-            range="{{sevenPlayerModes}}"
-            range-key="name"
-            value="{{sevenPlayerModeIndex}}"
-            bindchange="onSevenPlayerModeChange"
-          >
-            <view class="picker-view">
-              {{sevenPlayerModes[sevenPlayerModeIndex].name}} - {{sevenPlayerModes[sevenPlayerModeIndex].description}}
-            </view>
-          </picker>
         </view>
 
         <!-- 让分设置 -->

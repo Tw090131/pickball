@@ -1,6 +1,6 @@
 // pages/event-detail/event-detail.js
 const app = getApp();
-const { getEventDetail } = require('../../utils/api');
+const { getEventDetail, startEvent: startEventAPI } = require('../../utils/api');
 
 Page({
   data: {
@@ -116,10 +116,21 @@ Page({
             feeText: feeText,
             feeModeText: feeModeText,
             organizer: eventData.organizer?.name || eventData.organizerName || '未知组织',
+            organizerId: eventData.organizer?._id || eventData.organizer?.id || eventData.organizer,
             organizerAvatar: eventData.organizer?.avatar || eventData.organizerAvatar || '',
             description: eventData.description || '',
             status,
-            statusClass
+            statusClass,
+            isOrganizer: app.globalData.userInfo && (
+              (eventData.organizer?._id || eventData.organizer?.id || eventData.organizer)?.toString() === 
+              (app.globalData.userInfo.id || app.globalData.userInfo._id)?.toString()
+            ),
+            canStart: status === '报名中' && 
+                     eventData.currentParticipants >= 4 && 
+                     app.globalData.userInfo && (
+                       (eventData.organizer?._id || eventData.organizer?.id || eventData.organizer)?.toString() === 
+                       (app.globalData.userInfo.id || app.globalData.userInfo._id)?.toString()
+                     )
           },
           participants: [], // TODO: 从服务器获取报名人员列表
           isRegistered: false, // TODO: 检查当前用户是否已报名
@@ -204,6 +215,62 @@ Page({
   goToBracket() {
     wx.navigateTo({
       url: `/pages/bracket/bracket?eventId=${this.data.eventId}`
+    });
+  },
+
+  // 开始比赛
+  async startEvent() {
+    const event = this.data.event;
+    
+    if (!event.canStart) {
+      wx.showToast({
+        title: '无法开始比赛',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+
+    wx.showModal({
+      title: '确认开始比赛',
+      content: `确定要开始比赛吗？系统将自动生成对战组，比赛将进入进行中状态。`,
+      confirmText: '开始',
+      confirmColor: '#4CAF50',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            wx.showLoading({ title: '生成对战组中...', mask: true });
+            
+            const result = await startEventAPI(event.id);
+            
+            wx.hideLoading();
+            
+            if (result && result.success) {
+              wx.showToast({
+                title: '比赛已开始',
+                icon: 'success',
+                duration: 2000
+              });
+              
+              // 刷新活动详情
+              setTimeout(() => {
+                this.loadEventDetail();
+              }, 1000);
+            } else {
+              throw new Error(result?.message || '开始比赛失败');
+            }
+          } catch (err) {
+            console.error('开始比赛失败', err);
+            wx.hideLoading();
+            wx.showModal({
+              title: '开始比赛失败',
+              content: err.message || '请稍后重试',
+              showCancel: false,
+              confirmText: '知道了'
+            });
+          }
+        }
+      }
     });
   }
 });

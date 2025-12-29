@@ -117,10 +117,16 @@ const eventSchema = new mongoose.Schema({
   
   // 八人转特殊配置
   rotationConfig: {
-    // 6人或7人的特殊模式
+    // 特殊模式（根据人数和场次确定）
     specialMode: {
       type: String,
       enum: ['standard', 'full', 'super'],
+      default: undefined,
+      required: false
+    },
+    // 目标场次数（用于生成排表时参考）
+    targetMatchCount: {
+      type: Number,
       default: undefined,
       required: false
     },

@@ -30,19 +30,45 @@ Page({
     maxPlayers: 13, // 最大人数
     allowSubstitute: false, // 是否允许替补
     enableHandicap: false, // 是否启用让分
-    sixPlayerMode: 'standard', // 6人转模式
-    sevenPlayerMode: 'standard', // 7人转模式
-    sixPlayerModeIndex: 0,
-    sevenPlayerModeIndex: 0,
-    sixPlayerModes: [
-      { name: '标准模式', value: 'standard', description: '每人4场，共6场' },
-      { name: '完整模式', value: 'full', description: '每人6场，共9场' },
-      { name: '超完整模式', value: 'super', description: '每人10场，共15场' }
+    // 人数选项（仅八人转）
+    playerCountOptions: [
+      { value: 4, label: '4人' },
+      { value: 5, label: '5人' },
+      { value: 6, label: '6人' },
+      { value: 7, label: '7人' },
+      { value: 8, label: '8人' }
     ],
-    sevenPlayerModes: [
-      { name: '标准模式', value: 'standard', description: '每人8场，共14场' },
-      { name: '完整模式', value: 'full', description: '每人12场，共21场' }
-    ],
+    playerCountIndex: 0, // 当前选择的人数索引
+    // 场次选项配置（根据人数动态变化）
+    matchCountOptions: [], // 当前人数对应的场次选项
+    matchCountIndex: 0, // 当前选择的场次索引
+    // 场次配置映射
+    matchCountConfig: {
+      4: [
+        { value: 3, label: '3场', description: '每人约3场' },
+        { value: 6, label: '6场', description: '每人约6场' },
+        { value: 9, label: '9场', description: '每人约9场' }
+      ],
+      5: [
+        { value: 5, label: '5场', description: '每人约5场' },
+        { value: 10, label: '10场', description: '每人约10场' },
+        { value: 15, label: '15场', description: '每人约15场' }
+      ],
+      6: [
+        { value: 6, label: '6场', description: '每人约6场' },
+        { value: 9, label: '9场', description: '每人约9场' },
+        { value: 12, label: '12场', description: '每人约12场' },
+        { value: 15, label: '15场', description: '每人约15场' }
+      ],
+      7: [
+        { value: 7, label: '7场', description: '每人约7场' },
+        { value: 14, label: '14场', description: '每人约14场' },
+        { value: 21, label: '21场', description: '每人约21场' }
+      ],
+      8: [
+        { value: 14, label: '14场', description: '每人7场，共14场（固定）' }
+      ]
+    },
     handicapTemplates: [
       { name: '无让分', value: 'none', description: '不使用让分' },
       { name: '女选手优势', value: 'female_advantage', description: '女选手获胜时额外获得1分' },
@@ -95,13 +121,18 @@ Page({
       
       // 如果是八人转，设置默认值
       if (options.rotationType === 'eight_rotation') {
+        const defaultPlayerCount = 8;
+        const defaultPlayerIndex = this.data.playerCountOptions.findIndex(opt => opt.value === defaultPlayerCount);
         this.setData({
           'formData.rotationRule': '八人转',
           'formData.rotationRuleIndex': 0,
           'formData.format': '双打',
           'formData.formatIndex': 1,
-          'formData.maxParticipants': options.maxPlayers || '13'
+          'formData.maxParticipants': defaultPlayerCount.toString(),
+          playerCountIndex: defaultPlayerIndex >= 0 ? defaultPlayerIndex : 0
         });
+        // 初始化场次选项
+        this.updateMatchCountOptions(defaultPlayerCount);
       }
     }
     
@@ -291,9 +322,51 @@ Page({
   // 轮转规则选择
   onRotationRuleChange(e) {
     const index = parseInt(e.detail.value);
+    const rotationRule = this.data.rotationRules[index];
     this.setData({
       'formData.rotationRuleIndex': index,
-      'formData.rotationRule': this.data.rotationRules[index]
+      'formData.rotationRule': rotationRule
+    });
+    
+    // 如果是八人转，初始化人数和场次选项
+    if (rotationRule === '八人转') {
+      const defaultPlayerCount = 8;
+      const defaultPlayerIndex = this.data.playerCountOptions.findIndex(opt => opt.value === defaultPlayerCount);
+      this.setData({
+        playerCountIndex: defaultPlayerIndex >= 0 ? defaultPlayerIndex : 0,
+        'formData.maxParticipants': defaultPlayerCount.toString()
+      });
+      this.updateMatchCountOptions(defaultPlayerCount);
+    }
+  },
+
+  // 人数选择（仅八人转）
+  onPlayerCountChange(e) {
+    const index = parseInt(e.detail.value);
+    const playerCount = this.data.playerCountOptions[index].value;
+    this.setData({
+      playerCountIndex: index,
+      'formData.maxParticipants': playerCount.toString(),
+      matchCountIndex: 0 // 重置场次选择
+    });
+    // 更新场次选项
+    this.updateMatchCountOptions(playerCount);
+  },
+
+  // 场次选择（仅八人转）
+  onMatchCountChange(e) {
+    const index = parseInt(e.detail.value);
+    this.setData({
+      matchCountIndex: index
+    });
+  },
+
+  // 更新场次选项
+  updateMatchCountOptions(playerCount) {
+    const options = this.data.matchCountConfig[playerCount] || [];
+    this.setData({
+      matchCountOptions: options,
+      matchCountIndex: 0
     });
   },
 
@@ -401,9 +474,19 @@ Page({
     
     // 八人转人数验证
     if (formData.rotationRule === '八人转') {
-      if (maxParticipants < 4 || maxParticipants > 13) {
+      const playerCount = parseInt(formData.maxParticipants);
+      if (playerCount < 4 || playerCount > 8) {
         wx.showToast({ 
-          title: '八人转支持 4-13 人参与', 
+          title: '八人转支持 4-8 人参与', 
+          icon: 'none',
+          duration: 2000
+        });
+        return false;
+      }
+      // 验证场次是否已选择
+      if (!this.data.matchCountOptions || this.data.matchCountOptions.length === 0 || this.data.matchCountIndex === undefined) {
+        wx.showToast({ 
+          title: '请选择比赛场次', 
           icon: 'none',
           duration: 2000
         });
@@ -515,15 +598,55 @@ Page({
       // 八人转特殊配置
       if (this.data.formData.rotationRule === '八人转') {
         const maxParticipants = parseInt(this.data.formData.maxParticipants);
+        const selectedMatchCount = this.data.matchCountOptions[this.data.matchCountIndex]?.value;
+        
         submitData.rotationConfig = {
-          enableHandicap: this.data.enableHandicap
+          enableHandicap: this.data.enableHandicap,
+          targetMatchCount: selectedMatchCount // 目标场次数
         };
 
-        // 6人或7人的特殊模式
-        if (maxParticipants === 6) {
-          submitData.rotationConfig.specialMode = this.data.sixPlayerMode;
+        // 根据人数和场次确定模式
+        // 4人：3/6/9场 -> standard/full/super
+        // 5人：5/10/15场 -> standard/full/super
+        // 6人：6/9/12/15场 -> standard/full/super/super
+        // 7人：7/14/21场 -> standard/full/super
+        // 8人：14场（固定）-> standard
+        if (maxParticipants === 4) {
+          if (selectedMatchCount === 3) {
+            submitData.rotationConfig.specialMode = 'standard';
+          } else if (selectedMatchCount === 6) {
+            submitData.rotationConfig.specialMode = 'full';
+          } else if (selectedMatchCount === 9) {
+            submitData.rotationConfig.specialMode = 'super';
+          }
+        } else if (maxParticipants === 5) {
+          if (selectedMatchCount === 5) {
+            submitData.rotationConfig.specialMode = 'standard';
+          } else if (selectedMatchCount === 10) {
+            submitData.rotationConfig.specialMode = 'full';
+          } else if (selectedMatchCount === 15) {
+            submitData.rotationConfig.specialMode = 'super';
+          }
+        } else if (maxParticipants === 6) {
+          if (selectedMatchCount === 6) {
+            submitData.rotationConfig.specialMode = 'standard';
+          } else if (selectedMatchCount === 9) {
+            submitData.rotationConfig.specialMode = 'full';
+          } else if (selectedMatchCount === 12 || selectedMatchCount === 15) {
+            submitData.rotationConfig.specialMode = 'super';
+          }
         } else if (maxParticipants === 7) {
-          submitData.rotationConfig.specialMode = this.data.sevenPlayerMode;
+          if (selectedMatchCount === 7) {
+            submitData.rotationConfig.specialMode = 'standard';
+          } else if (selectedMatchCount === 14) {
+            submitData.rotationConfig.specialMode = 'full';
+          } else if (selectedMatchCount === 21) {
+            submitData.rotationConfig.specialMode = 'super';
+          }
+        } else if (maxParticipants === 8) {
+          // 8人固定14场
+          submitData.rotationConfig.specialMode = 'standard';
+          submitData.rotationConfig.targetMatchCount = 14;
         }
 
         // 让分规则

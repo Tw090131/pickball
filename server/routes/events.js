@@ -403,6 +403,189 @@ router.delete('/:id', authenticate, async (req, res, next) => {
   }
 });
 
+/**
+ * 开始比赛（生成对战组）
+ * POST /api/events/:id/start
+ */
+router.post('/:id/start', authenticate, async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: '赛事不存在'
+      });
+    }
+
+    // 检查权限（只有组织者可以开始比赛）
+    if (event.organizer.toString() !== req.userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: '无权限开始此赛事'
+      });
+    }
+
+    // 检查活动状态
+    if (event.status === 'in_progress') {
+      return res.status(400).json({
+        success: false,
+        message: '比赛已开始'
+      });
+    }
+
+    if (event.status === 'ended' || event.status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: '比赛已结束或已取消，无法开始'
+      });
+    }
+
+    // 获取所有报名用户
+    const Registration = require('../models/Registration');
+    const registrations = await Registration.find({
+      event: req.params.id,
+      status: 'registered',
+      paymentStatus: { $in: ['paid', 'pending'] } // 已支付或待支付（免费活动）
+    }).populate('user', 'nickName avatarUrl');
+
+    if (registrations.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: `报名人数不足，当前 ${registrations.length} 人，至少需要 4 人才能开始比赛`
+      });
+    }
+
+    // 检查是否已经生成过比赛
+    const Match = require('../models/Match');
+    const existingMatches = await Match.countDocuments({ event: req.params.id });
+    
+    if (existingMatches > 0) {
+      // 如果已有比赛记录，直接更新状态
+      event.status = 'in_progress';
+      await event.save();
+      
+      return res.json({
+        success: true,
+        message: '比赛已开始',
+        data: {
+          event,
+          matchesCount: existingMatches
+        }
+      });
+    }
+
+    // 根据不同的赛制生成对战组
+    let matches = [];
+    
+    if (event.rotationRule === '八人转') {
+      // 使用八人转排表生成
+      const { generateRotationSchedule } = require('../utils/rotation');
+      
+      const participants = registrations.map((reg, index) => ({
+        id: reg.user._id.toString(),
+        name: reg.user.nickName,
+        avatar: reg.user.avatarUrl,
+        registrationId: reg._id.toString()
+      }));
+
+      if (participants.length < 4 || participants.length > 13) {
+        return res.status(400).json({
+          success: false,
+          message: `参与人数 ${participants.length} 不符合八人转要求（4-13人）`
+        });
+      }
+
+      // 获取特殊模式配置
+      const sixPlayerMode = event.rotationConfig?.specialMode || 'standard';
+      const sevenPlayerMode = event.rotationConfig?.specialMode || 'standard';
+      
+      const schedule = generateRotationSchedule(participants, {
+        sixPlayerMode: participants.length === 6 ? sixPlayerMode : undefined,
+        sevenPlayerMode: participants.length === 7 ? sevenPlayerMode : undefined,
+        randomize: true
+      });
+
+      // 转换为 Match 格式
+      matches = schedule.map(match => ({
+        event: req.params.id,
+        round: match.round,
+        matchNumber: match.matchNumber,
+        teamA: {
+          name: match.teamA.name,
+          players: match.teamA.players.map(p => p.id),
+          score: 0
+        },
+        teamB: {
+          name: match.teamB.name,
+          players: match.teamB.players.map(p => p.id),
+          score: 0
+        },
+        status: 'pending'
+      }));
+    } else {
+      // 其他赛制（五人转、淘汰赛、分组循环）的简单配对
+      // 这里先实现一个简单的配对逻辑，后续可以根据需求完善
+      const participants = registrations.map(reg => reg.user._id);
+      
+      // 简单配对：每4人一组，分成两队
+      const teams = [];
+      for (let i = 0; i < participants.length; i += 4) {
+        const group = participants.slice(i, i + 4);
+        if (group.length >= 4) {
+          teams.push({
+            teamA: group.slice(0, 2),
+            teamB: group.slice(2, 4)
+          });
+        }
+      }
+
+      matches = teams.map((team, index) => ({
+        event: req.params.id,
+        round: 1,
+        matchNumber: index + 1,
+        teamA: {
+          name: `队伍A${index + 1}`,
+          players: team.teamA,
+          score: 0
+        },
+        teamB: {
+          name: `队伍B${index + 1}`,
+          players: team.teamB,
+          score: 0
+        },
+        status: 'pending'
+      }));
+
+      if (matches.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: '无法生成对战组，请确保报名人数足够'
+        });
+      }
+    }
+
+    // 保存比赛记录
+    await Match.insertMany(matches);
+
+    // 更新活动状态
+    event.status = 'in_progress';
+    await event.save();
+
+    res.json({
+      success: true,
+      message: '比赛已开始，对战组已生成',
+      data: {
+        event,
+        matchesCount: matches.length,
+        totalRounds: matches.length > 0 ? Math.max(...matches.map(m => m.round)) : 0
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // 计算距离的辅助函数
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // 地球半径（公里）

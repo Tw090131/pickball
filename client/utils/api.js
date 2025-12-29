@@ -225,6 +225,16 @@ const deleteEvent = (eventId) => {
   })
 }
 
+/**
+ * 开始比赛（生成对战组）
+ */
+const startEvent = (eventId) => {
+  return request({
+    url: `${baseURL}/events/${eventId}/start`,
+    method: 'POST'
+  })
+}
+
 module.exports = {
   baseURL,
   getEventList,
@@ -246,6 +256,7 @@ module.exports = {
   getUserStats,
   getUserRecord,
   getMyCreatedEvents,
-  deleteEvent
+  deleteEvent,
+  startEvent
 }
 

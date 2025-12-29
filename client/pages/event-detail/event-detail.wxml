@@ -84,16 +84,26 @@
 
   <!-- 操作按钮 -->
   <view class="action-buttons">
+    <!-- 组织者：开始比赛按钮 -->
     <button 
       class="btn-primary action-btn"
-      wx:if="{{event.status === '报名中' && !isRegistered}}"
+      wx:if="{{event.canStart}}"
+      bindtap="startEvent"
+    >
+      开始比赛
+    </button>
+    
+    <!-- 普通用户：报名按钮 -->
+    <button 
+      class="btn-primary action-btn"
+      wx:if="{{event.status === '报名中' && !isRegistered && !event.canStart}}"
       bindtap="goToRegister"
     >
       立即报名
     </button>
     <button 
       class="btn-secondary action-btn"
-      wx:if="{{event.status === '报名中' && isRegistered}}"
+      wx:if="{{event.status === '报名中' && isRegistered && !event.canStart}}"
       disabled
     >
       已报名
