@@ -21,12 +21,40 @@
 .fee-info {
   font-size: 28rpx;
   color: #666;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.fee-label {
+  margin-bottom: 5rpx;
 }
 
 .fee {
   color: #F44336;
   font-weight: bold;
   font-size: 32rpx;
+  margin-bottom: 5rpx;
+}
+
+.fee-hint {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 40rpx;
+  text-align: center;
+  color: #666;
+}
+
+.error-container button {
+  margin-top: 30rpx;
 }
 
 .user-info {

@@ -1,13 +1,28 @@
 <!--pages/register/register.wxml-->
 <view class="container">
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  
+  <!-- 错误提示 -->
+  <view class="error-container" wx:if="{{error && !loading}}">
+    <text>{{error}}</text>
+    <button class="btn-primary" bindtap="loadEvent">重试</button>
+  </view>
+  
+  <!-- 报名表单 -->
+  <view wx:if="{{!loading && !error}}">
   <view class="event-info card">
     <view class="event-title">{{event.title}}</view>
     <view class="event-meta">
       <text>{{event.startTime}}</text>
       <text>{{event.location}}</text>
     </view>
-    <view class="fee-info" wx:if="{{event.registrationFee > 0}}">
-      报名费：<text class="fee">¥{{event.registrationFee}}</text>
+    <view class="fee-info" wx:if="{{event.feeText}}">
+      <text class="fee-label">报名费用：</text>
+      <text class="fee">{{event.feeText}}</text>
+      <text class="fee-hint" wx:if="{{event.feeModeText}}">（{{event.feeModeText}}）</text>
     </view>
   </view>
 
@@ -61,10 +76,10 @@
   </view>
 
   <!-- 支付信息 -->
-  <view class="payment-section card" wx:if="{{event.registrationFee > 0}}">
+  <view class="payment-section card" wx:if="{{event.needPayment}}">
     <view class="payment-info">
-      <text class="label">报名费：</text>
-      <text class="amount">¥{{event.registrationFee}}</text>
+      <text class="label">需支付：</text>
+      <text class="amount">{{event.feeText}}</text>
     </view>
   </view>
 
@@ -76,8 +91,9 @@
       disabled="{{!canSubmit || submitting}}"
       loading="{{submitting}}"
     >
-      {{submitting ? '处理中...' : (event.registrationFee > 0 ? '确认支付' : '确认报名')}}
+      {{submitting ? '处理中...' : (event.needPayment ? '确认支付' : '确认报名')}}
     </button>
+  </view>
   </view>
 </view>
 

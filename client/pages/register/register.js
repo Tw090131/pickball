@@ -1,5 +1,6 @@
 // pages/register/register.js
 const app = getApp();
+const { getEventDetail } = require('../../utils/api');
 
 Page({
   data: {
@@ -10,11 +11,13 @@ Page({
     partnerName: '',
     canSubmit: false,
     submitting: false, // 防止重复提交
+    loading: true,
+    error: null,
     timers: [] // 保存定时器
   },
 
   onLoad(options) {
-    const id = parseInt(options.eventId);
+    const id = options.eventId; // 使用字符串 ID
     this.setData({
       eventId: id
     });
@@ -23,19 +26,89 @@ Page({
   },
 
   // 加载赛事信息
-  loadEvent() {
-    // 模拟数据，实际应该从服务器获取
-    const mockEvent = {
-      id: this.data.eventId,
-      title: '周末匹克球友谊赛',
-      startTime: app.formatTime(new Date()),
-      location: '市体育馆',
-      format: '双打',
-      registrationFee: 50
-    };
-    this.setData({
-      event: mockEvent
-    });
+  async loadEvent() {
+    this.setData({ loading: true, error: null });
+    
+    try {
+      const res = await getEventDetail(this.data.eventId);
+      
+      if (res && res.success && res.data && res.data.event) {
+        const eventData = res.data.event;
+        
+        // 格式化时间
+        const formatDateTime = (dateStr) => {
+          if (!dateStr) return '';
+          const date = new Date(dateStr);
+          const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+          const year = date.getFullYear();
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const day = date.getDate().toString().padStart(2, '0');
+          const hour = date.getHours().toString().padStart(2, '0');
+          const minute = date.getMinutes().toString().padStart(2, '0');
+          const weekday = weekdays[date.getDay()];
+          return `${year}/${month}/${day} ( ${weekday} ) ${hour}:${minute}`;
+        };
+
+        // 处理报名费显示
+        let feeText = '免费';
+        let feeModeText = '';
+        let needPayment = false; // 是否需要支付
+        
+        if (eventData.feeMode === 'free') {
+          feeText = '免费';
+          feeModeText = '活动完全免费';
+          needPayment = false;
+        } else if (eventData.feeMode === 'aa') {
+          feeText = '赛后AA';
+          feeModeText = '活动结束后AA平摊场地费用';
+          needPayment = false;
+        } else if (eventData.feeMode === 'prepay') {
+          feeText = `¥${eventData.registrationFee || 0}`;
+          feeModeText = '报名时需先支付费用';
+          needPayment = true;
+        } else {
+          // 兼容旧数据：如果没有 feeMode，根据 registrationFee 判断
+          if (eventData.registrationFee > 0) {
+            feeText = `¥${eventData.registrationFee}`;
+            feeModeText = '报名时需先支付费用';
+            needPayment = true;
+          } else {
+            feeText = '免费';
+            feeModeText = '活动完全免费';
+            needPayment = false;
+          }
+        }
+
+        this.setData({
+          event: {
+            id: eventData.id || eventData._id,
+            title: eventData.title,
+            startTime: formatDateTime(eventData.startTime),
+            location: eventData.location,
+            format: eventData.format?.type || '未知',
+            registrationFee: eventData.registrationFee || 0,
+            feeMode: eventData.feeMode || 'free',
+            feeText: feeText,
+            feeModeText: feeModeText,
+            needPayment: needPayment
+          },
+          loading: false
+        });
+      } else {
+        throw new Error(res?.message || '获取活动信息失败');
+      }
+    } catch (err) {
+      console.error('加载活动信息失败', err);
+      this.setData({
+        loading: false,
+        error: err.message || '加载失败，请稍后重试'
+      });
+      wx.showToast({
+        title: err.message || '加载失败',
+        icon: 'none',
+        duration: 2000
+      });
+    }
   },
 
   // 加载用户信息
@@ -121,10 +194,11 @@ Page({
       return;
     }
 
-    // 如果需要支付
-    if (this.data.event.registrationFee > 0) {
+    // 如果需要支付（仅赛前收款需要支付）
+    if (this.data.event.needPayment) {
       this.payRegistration();
     } else {
+      // 免费参与或赛后AA，直接报名
       this.submitRegistrationRequest();
     }
   },
