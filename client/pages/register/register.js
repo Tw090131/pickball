@@ -204,74 +204,118 @@ Page({
   },
 
   // 支付报名费
-  payRegistration() {
+  async payRegistration() {
     if (this.data.submitting) {
       return;
     }
 
-    wx.showLoading({ title: '支付中...' });
+    this.setData({ submitting: true });
+    wx.showLoading({ title: '处理中...' });
 
     try {
-      // 模拟支付流程
-      // 实际应该调用 wx.requestPayment
-      const timer = setTimeout(() => {
-        wx.hideLoading();
-        // 模拟支付成功
-        // 实际应该从服务器获取支付参数
-        wx.requestPayment({
-          timeStamp: '',
-          nonceStr: '',
-          package: '',
-          signType: 'MD5',
-          paySign: '',
-          success: (res) => {
-            this.submitRegistrationRequest();
-          },
-          fail: (err) => {
-            console.error('支付失败', err);
-            this.setData({ submitting: false });
-            wx.showToast({
-              title: err.errMsg || '支付失败',
-              icon: 'none'
-            });
-          }
-        });
-      }, 500);
-      this.data.timers.push(timer);
+      // 先创建报名记录（状态为待支付）
+      const { registerEvent } = require('../../utils/api');
+      
+      const registrationData = {
+        eventId: this.data.eventId,
+        teamMode: this.data.teamMode,
+        partnerName: this.data.teamMode === 'with-partner' ? this.data.partnerName.trim() : null
+      };
+
+      const registerRes = await registerEvent(registrationData);
+      
+      if (!registerRes || !registerRes.success) {
+        throw new Error(registerRes?.message || '创建报名记录失败');
+      }
+
+      const registrationId = registerRes.data?.registration?._id || registerRes.data?.registration?.id;
+      
+      if (!registrationId) {
+        throw new Error('获取报名记录ID失败');
+      }
+
+      // 创建支付订单
+      const { createPayment } = require('../../utils/api');
+      const paymentRes = await createPayment({ registrationId });
+      
+      if (!paymentRes || !paymentRes.success) {
+        throw new Error(paymentRes?.message || '创建支付订单失败');
+      }
+
+      const paymentParams = paymentRes.data?.paymentParams;
+      
+      if (!paymentParams) {
+        throw new Error('获取支付参数失败');
+      }
+
+      wx.hideLoading();
+
+      // 调用微信支付
+      wx.requestPayment({
+        timeStamp: paymentParams.timeStamp,
+        nonceStr: paymentParams.nonceStr,
+        package: paymentParams.package,
+        signType: paymentParams.signType || 'MD5',
+        paySign: paymentParams.paySign,
+        success: (res) => {
+          wx.showToast({
+            title: '支付成功',
+            icon: 'success',
+            duration: 2000
+          });
+          
+          setTimeout(() => {
+            wx.navigateBack();
+          }, 2000);
+        },
+        fail: (err) => {
+          console.error('支付失败', err);
+          this.setData({ submitting: false });
+          wx.showToast({
+            title: err.errMsg || '支付失败',
+            icon: 'none',
+            duration: 2000
+          });
+        }
+      });
     } catch (err) {
-      console.error('支付异常', err);
+      console.error('支付流程异常', err);
       wx.hideLoading();
       this.setData({ submitting: false });
       wx.showToast({
-        title: '支付异常，请重试',
-        icon: 'none'
+        title: err.message || '支付异常，请重试',
+        icon: 'none',
+        duration: 2000
       });
     }
   },
 
   // 提交报名请求
-  submitRegistrationRequest() {
+  async submitRegistrationRequest() {
     this.setData({ submitting: true });
     wx.showLoading({ title: '报名中...' });
 
     try {
+      const { registerEvent } = require('../../utils/api');
+      
       const registrationData = {
         eventId: this.data.eventId,
-        userId: this.data.userInfo.id || 'user_' + Date.now(),
         teamMode: this.data.teamMode,
-        partnerName: this.data.teamMode === 'with-partner' ? this.data.partnerName : null
+        partnerName: this.data.teamMode === 'with-partner' ? this.data.partnerName.trim() : null
       };
 
-      // 模拟API调用
-      const timer1 = setTimeout(() => {
-        wx.hideLoading();
+      const res = await registerEvent(registrationData);
+      
+      wx.hideLoading();
+      
+      if (res && res.success) {
         wx.showToast({
           title: '报名成功',
           icon: 'success',
           duration: 2000
         });
 
-        const timer2 = setTimeout(() => {
+        setTimeout(() => {
           wx.navigateBack({
             fail: (err) => {
               console.error('返回失败', err);
@@ -279,16 +323,17 @@ Page({
             }
           });
         }, 2000);
-        this.data.timers.push(timer2);
-      }, 1500);
-      this.data.timers.push(timer1);
+      } else {
+        throw new Error(res?.message || '报名失败');
+      }
     } catch (err) {
       console.error('提交报名失败', err);
       wx.hideLoading();
       this.setData({ submitting: false });
       wx.showToast({
-        title: '报名失败，请重试',
-        icon: 'none'
+        title: err.message || '报名失败，请重试',
+        icon: 'none',
+        duration: 2000
       });
     }
   },

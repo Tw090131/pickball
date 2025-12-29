@@ -155,11 +155,11 @@ const cancelRegistration = (registrationId) => {
 /**
  * 创建支付订单
  */
-const createPayment = (registrationId) => {
+const createPayment = (data) => {
   return request({
     url: `${baseURL}/payment/create`,
     method: 'POST',
-    data: { registrationId }
+    data: data
   })
 }
 

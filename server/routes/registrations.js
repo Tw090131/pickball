@@ -51,6 +51,35 @@ router.post('/', authenticate, async (req, res, next) => {
       });
     }
 
+    // 根据 feeMode 判断是否需要支付
+    let needPayment = false;
+    let paymentAmount = 0;
+    let paymentStatus = 'paid'; // 默认已支付（免费或AA）
+    
+    if (event.feeMode === 'prepay') {
+      // 赛前收款，需要支付
+      needPayment = true;
+      paymentAmount = event.registrationFee || 0;
+      paymentStatus = 'pending'; // 待支付
+    } else if (event.feeMode === 'aa') {
+      // 赛后AA，不需要支付
+      needPayment = false;
+      paymentAmount = 0;
+      paymentStatus = 'paid'; // 标记为已支付，因为不需要预付款
+    } else {
+      // 免费参与或旧数据兼容
+      needPayment = false;
+      paymentAmount = 0;
+      paymentStatus = 'paid';
+      
+      // 兼容旧数据：如果没有 feeMode，根据 registrationFee 判断
+      if (!event.feeMode && event.registrationFee > 0) {
+        needPayment = true;
+        paymentAmount = event.registrationFee;
+        paymentStatus = 'pending';
+      }
+    }
+
     // 创建报名记录
     const registration = new Registration({
       event: eventId,
@@ -58,8 +87,8 @@ router.post('/', authenticate, async (req, res, next) => {
       teamMode: teamMode || 'random',
       partnerId: partnerId || null,
       partnerName: partnerName || '',
-      paymentAmount: event.registrationFee,
-      paymentStatus: event.registrationFee > 0 ? 'pending' : 'paid'
+      paymentAmount: paymentAmount,
+      paymentStatus: paymentStatus
     });
 
     await registration.save();
